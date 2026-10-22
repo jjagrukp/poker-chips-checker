@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+/*
+ * Theme tokens. Components use these via Tailwind utilities (bg-surface, text-state-break…)
+ * or var(--color-*). Swap values here to re-theme the app (brand.themeId reserved for later themes).
+ * Text/background pairs are chosen for ≥ 4.5:1 contrast.
+ */
+@theme {
+  --font-display: 'Arial Black', 'Helvetica Neue', system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-surface: #14122b;
+  --color-surface-raised: #221f45;
+  --color-ink: #f7f5ff;
+  --color-ink-muted: #c4bfe6;
+  --color-accent: #ff5d73;
+  --color-accent-ink: #14122b;
+  --color-focus: #ffd23f;
+
+  /* Clock states (01 §4). Always paired with a text label/icon, never colour alone. */
+  --color-state-level: #3ddc97;
+  --color-state-warning: #ffd23f;
+  --color-state-break: #4cc9f0;
+  --color-state-paused: #b8b3d9;
+  --color-state-overtime: #ff8c42;
+  --color-state-completed: #c77dff;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

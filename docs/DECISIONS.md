@@ -39,6 +39,13 @@ Vitest + fast-check (property tests for allocation/schedules), Playwright with `
 for time travel, @axe-core/playwright for accessibility. Browsers: Chromium + WebKit
 (mobile Safari emulation). Firefox added in M10 only if time allows.
 
+D10 — Tooling and import boundaries
+ESLint flat config: typescript-eslint strict, react-hooks, react-refresh, jsx-a11y, prettier.
+Boundaries use `no-restricted-imports`: cross-layer imports must use `@/` (relative `../` out of a
+layer banned per depth; non-normalised/root paths and dynamic import banned); forbidden `@/`
+targets banned. Core also bans ambient time/timers. Component tests: Testing Library + jsdom.
+Why: no resolver plugin needed; relative paths are ambiguous (core/modules vs src/modules).
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)
