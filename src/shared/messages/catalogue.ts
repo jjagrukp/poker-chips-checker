@@ -75,6 +75,49 @@ export const messages = {
   'allocation.recommend.explanation':
     '{stack} gives each player {chips} chips across {denominations} values, with the fewest compromises.',
 
+  'holdem.module.name': "Texas Hold'em",
+  'holdem.module.description': "No-limit Texas Hold'em freezeout with rising blinds.",
+  'holdem.segment.level': 'Level {number}',
+  'holdem.segment.break': 'Break',
+  'holdem.display.blinds': 'Blinds',
+  'holdem.display.ante': 'Ante',
+  'holdem.summary.scheduled': 'Scheduled: {scheduled} to estimated finish (target {target})',
+  'holdem.config.error.blindRatio': 'The big blind must be twice the small blind.',
+  'holdem.config.error.sbNotPayable':
+    'The small blind ({sb}) must be a multiple of the smallest chip ({chip}).',
+  'holdem.config.error.stackTooShallow':
+    "The starting stack must be at least 10 big blinds (it's {depth}).",
+  'holdem.config.warning.levelsTooLong':
+    '{target} with {depth} BB stacks would need {needed}-minute levels. Try Gentle or a bigger stack.',
+  'holdem.config.warning.levelsTooShort':
+    '{target} with {depth} BB stacks would need {needed}-minute levels. Try Turbo or a smaller stack.',
+  'holdem.schedule.error.noLevels': 'The schedule needs at least one level.',
+  'holdem.schedule.error.nonPositiveDuration': 'Every level and break needs a length above 0.',
+  'holdem.schedule.error.invalidLevelData': "Level {level}: the blinds couldn't be read.",
+  'holdem.schedule.error.nonPositiveBlinds': 'Level {level}: blinds must be above 0.',
+  'holdem.schedule.error.sbNotPayable':
+    'Level {level}: the small blind ({sb}) must be a multiple of the smallest chip ({chip}).',
+  'holdem.schedule.error.anteNotPayable':
+    'Level {level}: the ante ({ante}) must be a multiple of the smallest chip ({chip}).',
+  'holdem.schedule.error.blindsNotIncreasing':
+    'Level {level}: the big blind must be higher than the level before.',
+  'holdem.schedule.error.stackTooShallow':
+    "The starting stack must be at least 10 big blinds (it's {depth}).",
+  'holdem.schedule.warning.levelLength':
+    'Level {level} is {minutes} minutes. {min} to {max} minutes suits this structure.',
+  'holdem.schedule.warning.growthJump': 'Level {level}: the big blind more than doubles.',
+  'holdem.schedule.warning.depthLow':
+    'Starting stacks are only {depth} big blinds, so play will be short and swingy.',
+  'holdem.schedule.warning.depthHigh':
+    'Starting stacks are {depth} big blinds, so the game may run long.',
+  'holdem.schedule.warning.finishOffTarget':
+    'Scheduled: {scheduled} to estimated finish, but the target is {target}.',
+  'holdem.schedule.warning.noFinish':
+    'The blinds never get high enough to finish the game. Add more levels.',
+  'holdem.schedule.warning.anteAboveBB': 'Level {level}: the ante is bigger than the big blind.',
+  'holdem.schedule.warning.blindRatio':
+    'Level {level}: the big blind is usually twice the small blind.',
+
   'transition.chipsCounted': {
     playful: 'The chips have been counted. Trust issues remain.',
     neutral: 'Chip count complete.',

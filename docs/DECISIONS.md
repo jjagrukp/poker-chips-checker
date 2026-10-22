@@ -97,6 +97,17 @@ D20 — Chip reference images deferred
 `ChipType.referenceImage` (Blob) is left out until M9: Blobs don't survive the JSON backup and would make
 all-or-nothing import fail. M9 decides storage (separate store or data URL) with a migration.
 
+D21 — Hold'em config carries denominations
+`HoldemConfig.denominations` (strictly increasing, first = `smallestDenomination`) added to spec 04 §1
+so the chip-clutter rule knows the next chip up (SB multiple of lcm(smallest, next) once BB ≥ 40 ×
+smallest). No config `schemaVersion`: the tournament record is versioned; `migrateConfig` uses moduleVersion.
+
+D22 — Hold'em ladder and duration details (refines 04 §3–4)
+Levels-to-finish = length of the snapped ladder to BB ≥ T/20 (not the log formula), so plan and schedule
+agree. Nice BB must be within ×1.5 of ideal, else nearest payable multiple. Breaks: after a level once
+play since the last break ≥ everyMin. Clamp warning only if needed length is >10 % outside bounds.
+Edits get a new schedule id; segment ids are `ctx.newId()`; `extend` adds no breaks.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)
