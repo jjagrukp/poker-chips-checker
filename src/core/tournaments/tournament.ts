@@ -38,6 +38,10 @@ export const TournamentSchema = z.object({
   clock: ClockAnchorSchema.optional(),
   settings: TournamentSettingsSchema,
   results: TournamentResultsSchema.optional(),
+  /** Informational countdown only; never auto-starts (spec 01 §5). */
+  plannedStartAt: epoch.optional(),
+  /** Setup-wizard working state, owned and parsed by features/tournament-setup (D23). */
+  setupDraft: z.unknown().optional(),
   createdAt: epoch,
   updatedAt: epoch,
   startedAt: epoch.optional(),

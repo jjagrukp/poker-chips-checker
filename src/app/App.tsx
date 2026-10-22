@@ -1,17 +1,14 @@
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import { Layout } from './Layout';
-import { Home } from './routes/Home';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { routes } from './routes';
+import type { Services } from './services';
+import { ServicesProvider } from './ServicesProvider';
 
-const router = createBrowserRouter([
-  {
-    element: <Layout />,
-    children: [
-      { index: true, element: <Home /> },
-      { path: '*', element: <Navigate to="/" replace /> },
-    ],
-  },
-]);
+const router = createBrowserRouter(routes);
 
-export function App() {
-  return <RouterProvider router={router} />;
+export function App({ services }: { services?: Services }) {
+  return (
+    <ServicesProvider {...(services ? { services } : {})}>
+      <RouterProvider router={router} />
+    </ServicesProvider>
+  );
 }

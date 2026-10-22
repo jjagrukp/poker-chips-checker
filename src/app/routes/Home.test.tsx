@@ -1,17 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { brand } from '@/app/configuration/brand';
-import { Home } from './Home';
+import { renderApp } from '@/app/testing/render-app';
 
 describe('Home', () => {
-  it('shows the brand name and tagline from brand config', () => {
-    render(<Home />);
-    expect(screen.getByRole('heading', { level: 1, name: brand.appName })).toBeInTheDocument();
+  it('shows the brand name and tagline from brand config', async () => {
+    await renderApp('/');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: brand.appName }),
+    ).toBeInTheDocument();
     expect(screen.getByText(brand.tagline)).toBeInTheDocument();
   });
 
-  it('shows placeholder actions as disabled', () => {
-    render(<Home />);
-    expect(screen.getByRole('button', { name: 'New tournament' })).toBeDisabled();
+  it('enables New tournament; Settings is still to come', async () => {
+    await renderApp('/');
+    expect(await screen.findByRole('button', { name: 'New tournament' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Settings' })).toBeDisabled();
   });
 });

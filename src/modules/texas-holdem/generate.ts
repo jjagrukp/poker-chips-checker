@@ -4,7 +4,7 @@ import { MINUTE } from '@/core/time';
 import { t } from '@/shared/messages';
 import { LevelDataSchema, type HoldemConfig, type LevelData } from './config';
 import { breakDue, bufferLevels, finishBigBlind } from './duration';
-import { formatChips } from './format';
+import { formatBlinds, formatChips } from './format';
 import { anteFor, ladderRules, snapNextBB } from './ladder';
 import { GENERATOR_VERSION, HOLDEM_MODULE_ID, HOLDEM_MODULE_VERSION, MAX_LEVELS } from './presets';
 
@@ -26,7 +26,7 @@ export function levelSegment(
   const lines = [
     {
       label: t('holdem.display.blinds', 'neutral'),
-      value: `${formatChips(data.sb)} / ${formatChips(data.bb)}`,
+      value: formatBlinds(data.sb, data.bb),
     },
   ];
   if (data.ante > 0) {

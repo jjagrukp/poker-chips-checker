@@ -21,3 +21,7 @@ export function t(key: MessageKey, tone: Tone = DEFAULT_TONE, params?: MessagePa
   const text = resolveMessage(messages[key], tone);
   return params ? interpolate(text, params) : text;
 }
+
+export function isMessageKey(key: string): key is MessageKey {
+  return Object.hasOwn(messages, key);
+}

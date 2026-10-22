@@ -2,6 +2,7 @@
 import 'fake-indexeddb/auto';
 import { z } from 'zod';
 import type { RecordType } from '@/core/persistence/migrations';
+import { inventoryRecord } from '@/features/chip-inventory/domain/inventory';
 import { T0 } from '@/core/testing/schedules';
 import type { Tournament } from '@/core/tournaments/tournament';
 import { openDatabase } from '@/infrastructure/indexeddb/database';
@@ -58,4 +59,10 @@ export function tournament(overrides: Partial<Tournament> = {}): Tournament {
     updatedAt: T0,
     ...overrides,
   };
+}
+
+/** Repositories with the real inventory record, for app and feature tests. */
+export async function openAppTestStorage(name = uniqueDbName()) {
+  const db = await openDatabase(name);
+  return createRepositories(db, { inventory: inventoryRecord, clock: { now: () => T0 } });
 }

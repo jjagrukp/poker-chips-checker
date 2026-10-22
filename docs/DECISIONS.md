@@ -108,6 +108,23 @@ agree. Nice BB must be within ×1.5 of ideal, else nearest payable multiple. Bre
 play since the last break ≥ everyMin. Clamp warning only if needed length is >10 % outside bounds.
 Edits get a new schedule id; segment ids are `ctx.newId()`; `extend` adds no breaks.
 
+D23 — Setup wizard state and routes
+Wizard state lives on the draft tournament: `Tournament.setupDraft` (opaque `unknown` in core, parsed by
+`SetupDraftSchema` in features/tournament-setup) plus optional `plannedStartAt`; additive optional fields, so no
+schemaVersion bump. Per-wizard Zustand vanilla store saves after every change (serialised, coalesced). Routes:
+`/setup/:id/:step`, `/tournament/:id`. Hold'em-specific steps live in the feature (only module); revisit with a 2nd game.
+
+D24 — Ladder denominations come from the chips handed out
+After a stack is accepted, `denominations` = values with perPlayer > 0 (before that: the confirmed assignment), so the
+first SB is payable with chips actually in play and `validateAllocation({firstSB})` agrees. Stack search aims at the
+structure's preset depth (custom: stack ÷ BB). Players/inventory changes clear the stack; a later structure change
+keeps it (re-checked against the new first SB) rather than sending the host back to step 4.
+
+D25 — Inventory rows as text
+Review rows keep quantity/value as typed text (`ChipRow`, chip-inventory/ui) so a half-typed row never corrupts the
+saved draft; `toInventory` maps bad text to NaN for `validateInventory`. Confirming writes the reusable inventory
+(same id when picked from a saved set, so it updates it). Components use Testing Library `fireEvent` (no user-event dep).
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)
