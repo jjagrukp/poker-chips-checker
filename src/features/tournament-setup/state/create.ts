@@ -3,15 +3,16 @@ import type { Repositories } from '@/core/persistence/repositories';
 import { transition } from '@/core/tournaments/lifecycle';
 import type { Tournament } from '@/core/tournaments/tournament';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
-import { newWizard, toTournament } from './wizard';
+import { newWizard, toTournament, type WizardState } from './wizard';
 
-/** Creates and saves a fresh draft; returns its id. */
+/** Creates and saves a fresh draft, optionally seeded (preset, duplicate, chips); returns its id. */
 export async function createDraft(
   repos: Repositories<Inventory>,
   ctx: ModuleContext,
+  seed: (state: WizardState) => WizardState = (state) => state,
 ): Promise<string> {
   const now = ctx.clock.now();
-  const state = newWizard({ tournamentId: ctx.newId(), inventoryId: ctx.newId() }, now);
+  const state = seed(newWizard({ tournamentId: ctx.newId(), inventoryId: ctx.newId() }, now));
   const result = await repos.tournaments.commit({ tournament: toTournament(state, now) });
   if (!result.ok) throw new Error('createDraft: commit conflict');
   return state.tournament.id;

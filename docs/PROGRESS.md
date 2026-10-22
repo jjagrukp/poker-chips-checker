@@ -1,9 +1,9 @@
 # Progress
 
 ## Current state
-Active milestone: M8
+Active milestone: M9
 Status: not started
-Last completed: M7
+Last completed: M8
 Open issues / follow-ups:
 - Cross-layer imports must use the `@/` alias (see D10); boundary rules also ban dynamic import().
 - Save every step via `repos.tournaments.commit({tournament, schedules?, events?, expectedClockRevision?})` (D16).
@@ -15,7 +15,9 @@ Open issues / follow-ups:
   doesn't move/return focus. Missing tests: queued-audio cancel on pause, viewer silence, take-control dedupe.
 - Ad-hoc break start has no alert (host pressed it). Overtime has no alert at schedule end. No e2e for alerts yet (M10).
 - `segment_started` isn't logged when a paused `next`/`previous` segment is later resumed (M8 if actual duration needs it).
-- Completed/cancelled screen is a placeholder in ClockScreen.tsx; M8 adds results, positions, actual duration.
+- Results (D28): ResultsScreen saves via `repos.tournaments.commit` directly (no store/broadcast; last write wins
+  across tabs). Duplicate keeps the source's confirmed inventory snapshot even if that chip set changed since.
+  Library: focus isn't returned after Cancel/Delete. No inventory edit screen yet (spec 01 §5 #3) — M10 if needed.
 - e2e live-clock spec is skipped on WebKit (navigation hangs under `page.clock` after fastForward): revisit in M10.
 - Overtime "Add levels" adds 3 levels; level count isn't configurable yet.
 - Optional: validator warning when an edited level breaks the chip-clutter rule; clamp-warning copy suggests Gentle/Turbo even when already on it.
@@ -35,3 +37,4 @@ M4 — 2026-10-22 — "M4: Hold'em module" — config + presets, blind ladder (n
 M5 — 2026-10-22 — "M5: setup wizard…" — six-step wizard with draft auto-save + resume, inventory review, recommended/custom stack with nearest alternatives, structure presets + advanced + per-level edits, review → ready, e2e
 M6 — 2026-10-22 — "M6: live clock" — clock screen + controls/keyboard, recovery summary, overtime add-levels preview, ad-hoc breaks, running edits (past locked), wake lock, fullscreen, viewer tabs, players + avg stack
 M7 — 2026-10-22 — "M7: audio & alerts" — pure alert planner (live vs gap, keyed dedupe), Web Audio synth with 15 s look-ahead, Sound & alerts panel (toggles, volume, test, flash, notifications), visual banners, completion sound
+M8 — 2026-10-23 — "M8: results & presets" — results screen (positions, editable actual duration), save as preset, duplicate, new tournament with same chips, Home library (resume, results, presets, chip sets, delete with confirm)

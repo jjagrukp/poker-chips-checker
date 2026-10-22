@@ -141,6 +141,12 @@ the AudioContext (cancelled on revision/mute/pref change or a ≥ 2 s gap). Only
 persists `Tournament.firedAlerts` (pruned after 10 min); viewers show banners with in-memory dedupe. Prefs live in
 `Settings.alerts` (additive, no version bump); mute stays `alertsMuted`. Complete sounds only when this tab ends it.
 
+D28 — Results and reuse (refines 02 §6)
+Actual duration = start → complete/cancel transition events (wall time, pauses included; falls back to
+startedAt/endedAt), host-editable in whole minutes. Positions list every place 1…count, names optional. A preset
+stores the full HoldemConfig but applying it copies only players/duration/structure fields; stack and chips come
+from the new inventory. Duplicate copies config + setupDraft (edited schedules renumbered, else regenerated).
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)

@@ -12,9 +12,11 @@ export const TournamentSettingsSchema = z.object({
 });
 export type TournamentSettings = z.infer<typeof TournamentSettingsSchema>;
 
-// Refined in M8 (results).
+/** Finishing positions (optional names; place 1 is the winner) and the host-editable duration. */
 export const TournamentResultsSchema = z.object({
-  positions: z.array(z.object({ place: z.number().int().positive(), name: z.string().optional() })),
+  positions: z
+    .array(z.object({ place: z.number().int().positive(), name: z.string().optional() }))
+    .refine((p) => new Set(p.map((x) => x.place)).size === p.length, 'Places must be unique'),
   actualDurationMs: count.optional(),
 });
 export type TournamentResults = z.infer<typeof TournamentResultsSchema>;

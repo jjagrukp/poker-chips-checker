@@ -5,6 +5,7 @@ import { alertEnabled } from '@/core/alerts/alerts';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
+import { ResultsScreen } from '@/features/results/ui/ResultsScreen';
 import { setupPath } from '@/features/tournament-setup/ui/paths';
 import { ReadyScreen } from '@/features/tournament-setup/ui/ReadyScreen';
 import { buttonSecondary } from '@/shared/components/styles';
@@ -13,8 +14,8 @@ import { createClockStore, type ClockPlatform, type ClockStore } from '../state/
 import { useAudioUnlock } from './alerts';
 import { LiveClock } from './LiveClock';
 
-// `/tournament/:id`: ready → start screen, active → live clock, finished → summary (M8 adds
-// results). One store per mounted tournament owns loading, the tab lock and every write.
+// `/tournament/:id`: ready → start screen, active → live clock, finished → results. One store
+// per mounted tournament owns loading, the tab lock and every write.
 
 interface Props {
   tournamentId: string;
@@ -76,18 +77,7 @@ export function ClockScreen({ tournamentId, repos, ctx, platform }: Props) {
       );
     case 'completed':
     case 'cancelled':
-      return (
-        <main className="mx-auto flex max-w-xl flex-col gap-6 text-center">
-          <h1 className="font-display text-4xl text-accent">
-            {t(tournament.status === 'completed' ? 'clock.finished.title' : 'clock.cancelled.title')}
-          </h1>
-          {tournament.name && <p className="text-lg">{tournament.name}</p>}
-          <p className="text-ink-muted">{t('clock.finished.resultsSoon')}</p>
-          <Link to="/" className={buttonSecondary + ' inline-flex items-center justify-center'}>
-            {t('setup.home')}
-          </Link>
-        </main>
-      );
+      return <ResultsScreen tournament={tournament} repos={repos} ctx={ctx} />;
   }
 }
 
