@@ -36,6 +36,8 @@ export const TournamentSchema = z.object({
     .object({ count, remaining: count, names: z.array(z.string()).optional() })
     .refine((p) => p.remaining <= p.count, 'remaining cannot exceed count'),
   clock: ClockAnchorSchema.optional(),
+  /** Alert keys already fired, so a refresh or another tab never repeats one (spec 03 §6.2). */
+  firedAlerts: z.array(z.string()).optional(),
   settings: TournamentSettingsSchema,
   results: TournamentResultsSchema.optional(),
   /** Informational countdown only; never auto-starts (spec 01 §5). */

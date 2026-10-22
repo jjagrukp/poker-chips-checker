@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { alertEnabled } from '@/core/alerts/alerts';
+import type { PlannedAlert } from '@/core/alerts/plan';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Schedule, Segment } from '@/core/scheduling/schedule';
 import { MINUTE, SECOND } from '@/core/time';
@@ -18,6 +20,7 @@ import {
 } from '@/core/timer/commands';
 import { deriveClock, type ClockView } from '@/core/timer/derive-clock';
 import type { Tournament } from '@/core/tournaments/tournament';
+import type { AudioState } from '@/infrastructure/audio/alert-audio';
 import type { HoldemConfig } from '@/modules/texas-holdem/config';
 import { extend, type EditResult } from '@/modules/texas-holdem/edits';
 import { formatBlinds, formatChips, formatDurationMin } from '@/modules/texas-holdem/format';
@@ -32,6 +35,8 @@ import {
   levelRemaining,
 } from '../domain/screen';
 import type { ClockPlatform, ClockStore, Recovery } from '../state/clock-store';
+import { useAlerts } from './alerts';
+import { AlertSettings } from './AlertSettings';
 import {
   useFullscreen,
   useRecoveryTriggers,
@@ -64,13 +69,28 @@ interface Props {
   anchor: ClockAnchor;
   schedule: Schedule;
   config: HoldemConfig | undefined;
-  state: Pick<ClockStore, 'role' | 'muted' | 'recovery' | 'warning'>;
-  actions: Omit<ClockStore, 'phase' | 'tournament' | 'schedule' | 'config' | 'role' | 'muted' | 'recovery' | 'warning'>;
+  state: Pick<ClockStore, 'role' | 'muted' | 'alertPrefs' | 'recovery' | 'warning'>;
+  actions: Omit<
+    ClockStore,
+    'phase' | 'tournament' | 'schedule' | 'config' | 'role' | 'muted' | 'alertPrefs' | 'recovery' | 'warning'
+  >;
   ctx: ModuleContext;
   platform: ClockPlatform;
+  /** Unlocked on the first gesture by ClockScreen (browsers block audio until then). */
+  audio: { state: AudioState; unlock: () => void };
 }
 
-export function LiveClock({ tournament, anchor, schedule, config, state, actions, ctx, platform }: Props) {
+export function LiveClock({
+  tournament,
+  anchor,
+  schedule,
+  config,
+  state,
+  actions,
+  ctx,
+  platform,
+  audio,
+}: Props) {
   const t = useT();
   const controller = state.role === 'controller';
   const options = useMemo(
@@ -109,6 +129,25 @@ export function LiveClock({ tournament, anchor, schedule, config, state, actions
   const [editing, setEditing] = useState(false);
   const [extension, setExtension] = useState<EditResult | null>(null);
   const [extensionRefused, setExtensionRefused] = useState(false);
+  const [alertSettings, setAlertSettings] = useState(false);
+  const alert = useAlerts({
+    schedule,
+    anchor,
+    options,
+    firedAlerts: tournament.firedAlerts,
+    clock: ctx.clock,
+    audio: platform.audio,
+    audioState: audio.state,
+    notifier: platform.notifier,
+    prefs: state.alertPrefs,
+    muted: state.muted,
+    controller,
+    onFired: (keys) => void actions.markAlertsFired(keys),
+    notify: (fired) => ({
+      title: tournament.name ?? t('home.untitled'),
+      body: alertText(t, fired),
+    }),
+  });
 
   const index = view.segmentIndex;
   const overtime = view.overtimeMs > 0;
@@ -176,7 +215,7 @@ export function LiveClock({ tournament, anchor, schedule, config, state, actions
           </button>
         </Banner>
       )}
-      {state.recovery && (
+      {state.recovery && alertEnabled(state.alertPrefs, 'recovery') && (
         <Banner tone="info" onDismiss={actions.dismissRecovery}>
           {recoveryText(t, state.recovery, nowLabel, formatCountdown(view.remainingMs))}
         </Banner>
@@ -185,6 +224,34 @@ export function LiveClock({ tournament, anchor, schedule, config, state, actions
         <Banner tone="warning" onDismiss={actions.dismissWarning}>
           {t(`clock.warning.${state.warning}`)}
         </Banner>
+      )}
+      {controller && !state.muted && audio.state === 'locked' && (
+        <Banner tone="info">
+          <span>{t('alerts.locked')}</span>
+          <button type="button" className={buttonSecondary} onClick={audio.unlock}>
+            {t('alerts.unlock')}
+          </button>
+        </Banner>
+      )}
+      {controller && audio.state === 'unsupported' && (
+        <p className="text-sm text-ink-muted">{t('alerts.unsupported')}</p>
+      )}
+      {alert && (
+        <div
+          role="alert"
+          className={`${card} flex items-center gap-3 border-l-4 border-state-warning text-lg font-semibold`}
+        >
+          <BellIcon />
+          <span>{alertText(t, alert)}</span>
+        </div>
+      )}
+      {alert && state.alertPrefs.flash && (
+        <div
+          key={alert.key}
+          aria-hidden="true"
+          data-testid="alert-flash"
+          className="pointer-events-none fixed inset-0 z-[60] bg-state-warning opacity-0 motion-safe:animate-alert-flash motion-reduce:hidden"
+        />
       )}
       {controller && (wakeLock === 'unsupported' || wakeLock === 'denied') && (
         <p className="text-sm text-ink-muted">{t('clock.wakeLock.unavailable')}</p>
@@ -346,6 +413,14 @@ export function LiveClock({ tournament, anchor, schedule, config, state, actions
           >
             {t('clock.control.mute')}
           </button>
+          <button
+            type="button"
+            className={buttonSecondary}
+            aria-expanded={alertSettings}
+            onClick={() => setAlertSettings((open) => !open)}
+          >
+            {t('clock.control.alerts')}
+          </button>
           <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
             {t(tv ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
           </button>
@@ -373,6 +448,17 @@ export function LiveClock({ tournament, anchor, schedule, config, state, actions
       )}
       {controller && !tv && <p className="text-center text-sm text-ink-muted">{t('clock.shortcuts')}</p>}
 
+      {controller && alertSettings && (
+        <AlertSettings
+          prefs={state.alertPrefs}
+          muted={state.muted}
+          audio={platform.audio}
+          notifier={platform.notifier}
+          onPrefs={(patch) => void actions.updateAlertPrefs(patch)}
+          onToggleMute={() => void actions.toggleMute()}
+          onClose={() => setAlertSettings(false)}
+        />
+      )}
       {controller && editing && config && (
         <RunningEditor
           // A schedule swapped underneath (e.g. levels added) invalidates any draft.
@@ -394,6 +480,25 @@ function segmentLabel(t: Translate, segment: Segment, index: number): string {
   return segment.kind === 'level'
     ? t('holdem.segment.level', { number: segment.levelNumber ?? index + 1 })
     : t('holdem.segment.break');
+}
+
+function alertText(t: Translate, alert: PlannedAlert): string {
+  switch (alert.type) {
+    case 'levelStart':
+      return t('transition.levelUp');
+    case 'breakEnd':
+      return t('transition.breakOver');
+    default:
+      return t(`alert.${alert.type}`);
+  }
+}
+
+function BellIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-7 w-7 shrink-0 fill-state-warning">
+      <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
+    </svg>
+  );
 }
 
 function recoveryText(t: Translate, recovery: Recovery, now: string, time: string): string {

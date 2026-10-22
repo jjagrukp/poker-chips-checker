@@ -190,6 +190,32 @@ describe('clock store', () => {
     expect(platform.lock.released).toBe(true);
   });
 
+  it('saves alert preferences and loads them next time', async () => {
+    const { s, repos, dispose } = await setup(readyTournament());
+    await s().updateAlertPrefs({ volume: 0.5 });
+    await s().updateAlertPrefs({ enabled: { countdown: false } });
+    expect((await repos.settings.get()).alerts).toEqual({ volume: 0.5, enabled: { countdown: false } });
+    dispose();
+
+    const clock = settableClock();
+    const again = createClockStore({ tournamentId: 't1', repos, ctx: clock.ctx, platform: fakePlatform(clock.now) });
+    again.getState().init();
+    await vi.waitFor(() => expect(again.getState().alertPrefs).toEqual({ volume: 0.5, enabled: { countdown: false } }));
+  });
+
+  it('persists fired alert keys, dropping stale ones, only from the controller', async () => {
+    const stale = `l1:oneMinute:${T0 - 20 * MINUTE}`;
+    const { s, repos, clock } = await setup({ ...activeFrom(), firedAlerts: [stale] });
+    clock.advance(MINUTE);
+    const key = `l1:oneMinute:${T0 + MINUTE}`;
+    await s().markAlertsFired([key]);
+    expect((await repos.tournaments.get('t1'))?.firedAlerts).toEqual([key]);
+
+    const viewer = await setup(activeFrom(), { role: 'viewer' });
+    await viewer.s().markAlertsFired([key]);
+    expect((await viewer.repos.tournaments.get('t1'))?.firedAlerts).toBeUndefined();
+  });
+
   it('reports a missing tournament', async () => {
     const repos = await openAppTestStorage();
     const clock = settableClock();

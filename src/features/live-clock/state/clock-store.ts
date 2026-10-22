@@ -1,4 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
+import type { AlertPrefs } from '@/core/alerts/alerts';
+import { recordFired } from '@/core/alerts/plan';
 import type { EventDraft } from '@/core/events/events';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
@@ -22,6 +24,8 @@ import {
 } from '@/core/tournaments/lifecycle';
 import type { Tournament } from '@/core/tournaments/tournament';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
+import type { AlertAudio } from '@/infrastructure/audio/alert-audio';
+import type { AlertNotifier } from '@/infrastructure/notifications/notifier';
 import type { ScreenWakeLock } from '@/infrastructure/screen/wake-lock';
 import type { TournamentChannel } from '@/infrastructure/tab-lock/broadcast';
 import type { ControllerLock, TabRole } from '@/infrastructure/tab-lock/controller-lock';
@@ -38,6 +42,8 @@ export interface ClockPlatform {
   /** Monotonic milliseconds (`performance.now`) for in-session skew detection. */
   monotonic(): number;
   wakeLock: ScreenWakeLock;
+  audio: AlertAudio;
+  notifier: AlertNotifier;
 }
 
 export interface Recovery {
@@ -55,6 +61,7 @@ export interface ClockStore {
   config: HoldemConfig | undefined;
   role: TabRole;
   muted: boolean;
+  alertPrefs: AlertPrefs;
   recovery: Recovery | undefined;
   warning: ClockWarning | undefined;
   /** Loads, takes the controller lock and recovers. Returns the cleanup. */
@@ -70,6 +77,9 @@ export interface ClockStore {
   recover(): Promise<void>;
   skewed(skewMs: number): Promise<void>;
   toggleMute(): Promise<void>;
+  updateAlertPrefs(patch: AlertPrefs): Promise<void>;
+  /** Persists fired alert keys so a refresh or another tab never repeats them. */
+  markAlertsFired(keys: string[]): Promise<void>;
   dismissRecovery(): void;
   dismissWarning(): void;
   takeControl(): void;
@@ -183,6 +193,7 @@ export function createClockStore({
       config: undefined,
       role: 'viewer',
       muted: false,
+      alertPrefs: {},
       recovery: undefined,
       warning: undefined,
 
@@ -193,6 +204,7 @@ export function createClockStore({
         void (async () => {
           const settings = await repos.settings.get().catch(() => undefined);
           if (settings?.alertsMuted) set({ muted: true });
+          if (settings?.alerts) set({ alertPrefs: settings.alerts });
           await get().reload();
           const acquired = await platform.acquireLock(tournamentId);
           if (disposed) {
@@ -326,6 +338,23 @@ export function createClockStore({
         set({ muted });
         await repos.settings.update({ alertsMuted: muted }).catch(() => undefined);
       },
+
+      async updateAlertPrefs(patch) {
+        const current = get().alertPrefs;
+        const alertPrefs = { ...current, ...patch };
+        if (patch.enabled) alertPrefs.enabled = { ...current.enabled, ...patch.enabled };
+        set({ alertPrefs });
+        await repos.settings.update({ alerts: alertPrefs }).catch(() => undefined);
+      },
+
+      markAlertsFired: (keys) =>
+        enqueue(async () => {
+          const current = writable('active');
+          if (!current || keys.length === 0) return;
+          const now = ctx.clock.now();
+          const firedAlerts = recordFired(current.tournament.firedAlerts ?? [], keys, now);
+          await save({ tournament: { ...current.tournament, firedAlerts }, events: [] });
+        }, undefined),
 
       dismissRecovery: () => set({ recovery: undefined }),
       dismissWarning: () => set({ warning: undefined }),

@@ -1,15 +1,19 @@
 # Progress
 
 ## Current state
-Active milestone: M7
+Active milestone: M8
 Status: not started
-Last completed: M6
+Last completed: M7
 Open issues / follow-ups:
 - Cross-layer imports must use the `@/` alias (see D10); boundary rules also ban dynamic import().
 - Save every step via `repos.tournaments.commit({tournament, schedules?, events?, expectedClockRevision?})` (D16).
-- Live clock (D26): `features/live-clock` store owns writes; browser APIs via `ClockPlatform` (app/clock-platform.ts,
-  injected in tests through `renderApp(path, repos, {ctx, clockPlatform})`). Mute = `Settings.alertsMuted` stub;
-  M7 alert prefs replace it. Hook alerts into `useTicker` (LiveClock.tsx); recovery must stay silent (spec 03 §6.2).
+- Live clock (D26) + alerts (D27): `ClockPlatform` now also carries `audio` + `notifier` (fakes in live-clock/testing).
+  Alert prefs UI is the "Sound & alerts" panel (`AlertSettings`) — reuse it in the M8/M10 Settings screen.
+- Alerts: background tabs under Chrome's 1-min throttling mark alerts missed (no sound/notification); consider
+  notifying for bounded gaps while hidden. With waitForHost, no chime when the host resumes (only breakEnd at deadline).
+- Alerts a11y: alert banner mounts with text (role=alert) — consider a persistent live region; Sound & alerts panel
+  doesn't move/return focus. Missing tests: queued-audio cancel on pause, viewer silence, take-control dedupe.
+- Ad-hoc break start has no alert (host pressed it). Overtime has no alert at schedule end. No e2e for alerts yet (M10).
 - `segment_started` isn't logged when a paused `next`/`previous` segment is later resumed (M8 if actual duration needs it).
 - Completed/cancelled screen is a placeholder in ClockScreen.tsx; M8 adds results, positions, actual duration.
 - e2e live-clock spec is skipped on WebKit (navigation hangs under `page.clock` after fastForward): revisit in M10.
@@ -30,3 +34,4 @@ M3 — 2026-10-22 — "M3: chips & allocation" — inventory model + record, den
 M4 — 2026-10-22 — "M4: Hold'em module" — config + presets, blind ladder (nice values, payability, chip-clutter), duration model with break solve, generator, validator, pure edits with diff, property tests
 M5 — 2026-10-22 — "M5: setup wizard…" — six-step wizard with draft auto-save + resume, inventory review, recommended/custom stack with nearest alternatives, structure presets + advanced + per-level edits, review → ready, e2e
 M6 — 2026-10-22 — "M6: live clock" — clock screen + controls/keyboard, recovery summary, overtime add-levels preview, ad-hoc breaks, running edits (past locked), wake lock, fullscreen, viewer tabs, players + avg stack
+M7 — 2026-10-22 — "M7: audio & alerts" — pure alert planner (live vs gap, keyed dedupe), Web Audio synth with 15 s look-ahead, Sound & alerts panel (toggles, volume, test, flash, notifications), visual banners, completion sound

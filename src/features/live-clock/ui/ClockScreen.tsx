@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useStore } from 'zustand';
+import { alertEnabled } from '@/core/alerts/alerts';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
@@ -8,7 +9,8 @@ import { setupPath } from '@/features/tournament-setup/ui/paths';
 import { ReadyScreen } from '@/features/tournament-setup/ui/ReadyScreen';
 import { buttonSecondary } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
-import { createClockStore, type ClockPlatform } from '../state/clock-store';
+import { createClockStore, type ClockPlatform, type ClockStore } from '../state/clock-store';
+import { useAudioUnlock } from './alerts';
 import { LiveClock } from './LiveClock';
 
 // `/tournament/:id`: ready → start screen, active → live clock, finished → summary (M8 adds
@@ -27,6 +29,8 @@ export function ClockScreen({ tournamentId, repos, ctx, platform }: Props) {
   useEffect(() => store.getState().init(), [store]);
   const state = useStore(store);
   const { phase, tournament, schedule, config, role } = state;
+  const audio = useAudioUnlock(platform.audio);
+  useCompletionSound(state, platform);
 
   if (phase === 'loading') {
     return <p className="text-center text-ink-muted">{t('setup.loading')}</p>;
@@ -67,6 +71,7 @@ export function ClockScreen({ tournamentId, repos, ctx, platform }: Props) {
           actions={state}
           ctx={ctx}
           platform={platform}
+          audio={audio}
         />
       );
     case 'completed':
@@ -84,6 +89,21 @@ export function ClockScreen({ tournamentId, repos, ctx, platform }: Props) {
         </main>
       );
   }
+}
+
+/** Sounds once when this tab ends the tournament, never on a later load (spec 03 §6.1). */
+function useCompletionSound(
+  { tournament, role, muted, alertPrefs }: Pick<ClockStore, 'tournament' | 'role' | 'muted' | 'alertPrefs'>,
+  platform: ClockPlatform,
+) {
+  const status = tournament?.status;
+  const previous = useRef(status);
+  useEffect(() => {
+    const was = previous.current;
+    previous.current = status;
+    if (was !== 'active' || status !== 'completed' || role !== 'controller') return;
+    if (!muted && alertEnabled(alertPrefs, 'complete')) platform.audio.play('complete');
+  }, [status, role, muted, alertPrefs, platform]);
 }
 
 function NotFound() {

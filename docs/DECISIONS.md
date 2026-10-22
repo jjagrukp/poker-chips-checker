@@ -134,6 +134,13 @@ wall-clock jump is treated as a wake (→ recovery) and only a backward jump re-
 manual clock change mid-session is trusted, like the closed-app limitation. Complete/cancel freeze the anchor.
 Mute is `Settings.alertsMuted` (optional, no version bump) until M7's alert preferences.
 
+D27 — Alert engine details (refines 03 §6)
+Keys are `${segmentId}:${type}:${at}` so a restarted level / extended break alerts again but a refresh doesn't;
+plans start at `max(prevTick, anchor.updatedAt)` (no alert on resume). Every enabled sound ≤ 15 s ahead is queued on
+the AudioContext (cancelled on revision/mute/pref change or a ≥ 2 s gap). Only the controller sounds, notifies and
+persists `Tournament.firedAlerts` (pruned after 10 min); viewers show banners with in-memory dedupe. Prefs live in
+`Settings.alerts` (additive, no version bump); mute stays `alertsMuted`. Complete sounds only when this tab ends it.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)

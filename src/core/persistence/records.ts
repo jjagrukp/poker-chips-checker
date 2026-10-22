@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AlertPrefsSchema } from '@/core/alerts/alerts';
 import { EVENT_SCHEMA_VERSION, TournamentEventSchema } from '@/core/events/events';
 import { SCHEDULE_SCHEMA_VERSION, ScheduleSchema } from '@/core/scheduling/schedule';
 import { TOURNAMENT_SCHEMA_VERSION, TournamentSchema } from '@/core/tournaments/tournament';
@@ -35,8 +36,9 @@ export const SettingsSchema = z.object({
   /** Result of `navigator.storage.persist()`, shown in Settings (spec 02 §7.6). */
   storagePersistence: StoragePersistenceSchema.optional(),
   durabilityNoticeDismissedAt: epoch.optional(),
-  /** Live-clock mute toggle; alert preferences proper arrive in M7. */
+  /** Live-clock mute toggle (M key); the rest of the alert preferences live in `alerts` (D27). */
   alertsMuted: z.boolean().optional(),
+  alerts: AlertPrefsSchema.optional(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 

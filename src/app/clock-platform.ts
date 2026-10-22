@@ -1,4 +1,6 @@
 import type { ClockPlatform } from '@/features/live-clock/state/clock-store';
+import { createAlertAudio } from '@/infrastructure/audio/alert-audio';
+import { createNotifier } from '@/infrastructure/notifications/notifier';
 import { createWakeLock } from '@/infrastructure/screen/wake-lock';
 import { openTournamentChannel } from '@/infrastructure/tab-lock/broadcast';
 import { acquireControllerLock } from '@/infrastructure/tab-lock/controller-lock';
@@ -11,5 +13,7 @@ export function browserClockPlatform(): ClockPlatform {
     openChannel: (id, onSaved) => openTournamentChannel(id, onSaved),
     monotonic: () => performance.now(),
     wakeLock: createWakeLock(),
+    audio: createAlertAudio(),
+    notifier: createNotifier(),
   };
 }

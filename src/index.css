@@ -24,6 +24,17 @@
   --color-state-paused: #b8b3d9;
   --color-state-overtime: #ff8c42;
   --color-state-completed: #c77dff;
+
+  /* Optional alert flash (spec 03 §6.2); never shown under reduced motion. */
+  --animate-alert-flash: alert-flash 0.8s ease-out forwards;
+  @keyframes alert-flash {
+    from {
+      opacity: 0.6;
+    }
+    to {
+      opacity: 0;
+    }
+  }
 }
 
 @layer base {
