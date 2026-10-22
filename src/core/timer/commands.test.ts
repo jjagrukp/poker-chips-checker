@@ -10,6 +10,7 @@ import {
   next,
   pause,
   previous,
+  reanchor,
   recover,
   resume,
   start,
@@ -500,5 +501,39 @@ describe('recover', () => {
     expect(r?.events).toEqual([
       { type: 'clock_skew', at: T0 - MINUTE, payload: { deltaMs: -MINUTE } },
     ]);
+  });
+});
+
+describe('reanchor', () => {
+  it('keeps the time left when the device clock jumps forward', () => {
+    // At T0+1m the wall clock jumps 1h ahead; only 1 minute really passed.
+    const r = reanchor(state(runningFromT0), T0 + 61 * MINUTE, 60 * MINUTE);
+    expect(r.anchor).toMatchObject({
+      status: 'running',
+      segmentIndex: 0,
+      deadline: T0 + 70 * MINUTE,
+      revision: 2,
+      updatedAt: T0 + 61 * MINUTE,
+    });
+    expect(view(state(r.anchor), T0 + 61 * MINUTE).remainingMs).toBe(9 * MINUTE);
+    expect(r.events).toEqual([
+      { type: 'clock_skew', at: T0 + 61 * MINUTE, payload: { deltaMs: 60 * MINUTE } },
+    ]);
+  });
+
+  it('keeps running when the clock jumps backwards, and shifts an ad-hoc break', () => {
+    const onBreak = startBreakNow(state(runningFromT0), T0 + MINUTE, 5 * MINUTE).anchor;
+    const r = reanchor(state(onBreak), T0 - 58 * MINUTE, -60 * MINUTE);
+    expect(r.anchor).toMatchObject({
+      status: 'running',
+      interlude: { deadline: T0 - 54 * MINUTE, resumeLevelRemainingMs: 9 * MINUTE },
+    });
+    expect(view(state(r.anchor), T0 - 58 * MINUTE).remainingMs).toBe(4 * MINUTE);
+  });
+
+  it('leaves paused anchors untouched apart from the stamp', () => {
+    const paused = pause(state(runningFromT0), T0 + MINUTE).anchor;
+    const r = reanchor(state(paused), T0 + 90 * MINUTE, 80 * MINUTE);
+    expect(r.anchor).toEqual({ ...paused, revision: paused.revision + 1, updatedAt: T0 + 90 * MINUTE });
   });
 });

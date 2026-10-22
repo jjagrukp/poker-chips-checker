@@ -125,6 +125,15 @@ Review rows keep quantity/value as typed text (`ChipRow`, chip-inventory/ui) so 
 saved draft; `toInventory` maps bad text to NaN for `validateInventory`. Confirming writes the reusable inventory
 (same id when picked from a saved set, so it updates it). Components use Testing Library `fireEvent` (no user-event dep).
 
+D26 — Live clock wiring
+One Zustand vanilla store per mounted tournament (`features/live-clock`) owns loading, the tab lock and a serial
+write queue; every write commits with `expectedClockRevision`, conflicts reload. Browser APIs (lock, channel,
+`performance.now`, wake lock) come in as a `ClockPlatform` from the composition root, so tests inject fakes. Ticker:
+250 ms interval, re-renders on `displayKey` change. Some browsers stop `performance.now` during sleep, so a forward
+wall-clock jump is treated as a wake (→ recovery) and only a backward jump re-anchors (core `reanchor`); a forward
+manual clock change mid-session is trusted, like the closed-app limitation. Complete/cancel freeze the anchor.
+Mute is `Settings.alertsMuted` (optional, no version bump) until M7's alert preferences.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)

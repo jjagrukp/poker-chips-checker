@@ -2,6 +2,7 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { ModuleContext } from '@/core/modules/contract';
+import type { ClockPlatform } from '@/features/live-clock/state/clock-store';
 import { openAppTestStorage } from '@/infrastructure/testing/storage';
 import { ServicesProvider } from '../ServicesProvider';
 import { AppRoutes } from './AppRoutes';
@@ -13,12 +14,17 @@ export function testContext(): ModuleContext {
 
 type AppRepos = Awaited<ReturnType<typeof openAppTestStorage>>;
 
+interface Options {
+  ctx?: ModuleContext;
+  clockPlatform?: ClockPlatform;
+}
+
 /** Pass `repos` to remount on the same storage (a reload). */
-export async function renderApp(path = '/', existing?: AppRepos) {
+export async function renderApp(path = '/', existing?: AppRepos, options: Options = {}) {
   const repos = existing ?? (await openAppTestStorage());
-  const ctx = testContext();
+  const ctx = options.ctx ?? testContext();
   const view = render(
-    <ServicesProvider services={{ repos, ctx }}>
+    <ServicesProvider services={{ repos, ctx, clockPlatform: options.clockPlatform }}>
       <MemoryRouter initialEntries={[path]}>
         <AppRoutes />
       </MemoryRouter>

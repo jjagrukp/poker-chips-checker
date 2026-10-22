@@ -1,53 +1,30 @@
-import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
 import type { Tournament } from '@/core/tournaments/tournament';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
 import { HoldemConfigSchema } from '@/modules/texas-holdem/config';
 import { formatChips } from '@/modules/texas-holdem/format';
-import { buttonPrimary, buttonSecondary, card } from '@/shared/components/styles';
+import { buttonPrimary, buttonQuiet, buttonSecondary, card } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import { reopenSetup } from '../state/create';
 import { setupPath } from './paths';
 
-// Landing page for a ready tournament. The live clock (M6) takes over from here.
+// Landing page for a ready tournament; the live clock takes over once it starts.
 
 interface Props {
-  tournamentId: string;
+  tournament: Tournament;
   repos: Repositories<Inventory>;
   ctx: ModuleContext;
+  /** Omitted in viewer tabs: only the controller starts the clock. */
+  onStart?: (() => void) | undefined;
 }
 
-export function ReadyScreen({ tournamentId, repos, ctx }: Props) {
+export function ReadyScreen({ tournament, repos, ctx, onStart }: Props) {
   const t = useT();
   const navigate = useNavigate();
-  const [tournament, setTournament] = useState<Tournament | null | undefined>(undefined);
   const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    repos.tournaments.get(tournamentId).then(
-      (found) => !cancelled && setTournament(found ?? null),
-      () => !cancelled && setTournament(null),
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [repos, tournamentId]);
-
-  if (tournament === undefined) return <p className="text-center text-ink-muted">{t('setup.loading')}</p>;
-  if (tournament === null) {
-    return (
-      <main className="mx-auto flex max-w-xl flex-col gap-4">
-        <p role="alert">{t('setup.notFound')}</p>
-        <Link to="/" className={buttonSecondary + ' text-center'}>
-          {t('setup.home')}
-        </Link>
-      </main>
-    );
-  }
-  if (tournament.status === 'draft') return <Navigate to={setupPath(tournament.id, 'review')} replace />;
 
   const config = HoldemConfigSchema.safeParse(tournament.config);
   const edit = async () => {
@@ -80,12 +57,17 @@ export function ReadyScreen({ tournamentId, repos, ctx }: Props) {
       <p>{t('ready.nextStep')}</p>
       {failed && <p role="alert">{t('setup.saveFailed')}</p>}
       <div className="flex flex-col gap-3">
-        {tournament.status === 'ready' && (
+        {onStart && (
+          <button type="button" className={buttonPrimary} onClick={onStart}>
+            {t('ready.startClock')}
+          </button>
+        )}
+        {onStart && (
           <button type="button" className={buttonSecondary} onClick={() => void edit()}>
             {t('ready.editSetup')}
           </button>
         )}
-        <Link to="/" className={buttonPrimary + ' inline-flex items-center justify-center'}>
+        <Link to="/" className={buttonQuiet + ' inline-flex items-center justify-center'}>
           {t('setup.home')}
         </Link>
       </div>

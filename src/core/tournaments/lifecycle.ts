@@ -1,6 +1,7 @@
 import type { EventDraft } from '@/core/events/events';
 import type { Schedule } from '@/core/scheduling/schedule';
 import type { EpochMs } from '@/core/time';
+import { freeze, normalise } from '@/core/timer/derive-clock';
 import {
   editSchedule,
   initialAnchor,
@@ -48,7 +49,9 @@ export interface Readiness {
 export type TransitionInput =
   | { action: 'markReady'; readiness: Readiness }
   | { action: 'start'; schedule: Schedule }
-  | { action: 'edit' | 'complete' | 'cancel' };
+  /** With the schedule, a started clock is frozen at `now` so it stops counting. */
+  | { action: 'complete' | 'cancel'; schedule?: Schedule }
+  | { action: 'edit' };
 
 export interface TransitionResult {
   tournament: Tournament;
@@ -64,6 +67,7 @@ export function transition(t: Tournament, input: TransitionInput, now: EpochMs):
   if (!canTransition(t.status, action)) throw new InvalidTransition(t.status, action);
   const to = TRANSITIONS[action].to;
   let next: Tournament = { ...t, status: to, updatedAt: now };
+  const events: EventDraft[] = [];
 
   switch (input.action) {
     case 'markReady': {
@@ -85,6 +89,23 @@ export function transition(t: Tournament, input: TransitionInput, now: EpochMs):
     case 'complete':
     case 'cancel':
       next = { ...next, endedAt: now };
+      if (t.clock && input.schedule) {
+        if (input.schedule.id !== t.scheduleId) {
+          throw new InvalidTransition(t.status, action, 'schedule does not belong to tournament');
+        }
+        const n = normalise(input.schedule, t.clock, now, {
+          breakEndBehaviour: t.settings.breakEndBehaviour,
+        });
+        const clock = { ...freeze(n.anchor, now), revision: t.clock.revision + 1, updatedAt: now };
+        next = { ...next, clock };
+        events.push(
+          ...n.started.map(({ segmentIndex, segmentId, at }): EventDraft => ({
+            type: 'segment_started',
+            at,
+            payload: { segmentIndex, segmentId },
+          })),
+        );
+      }
       break;
     case 'edit':
       break;
@@ -92,7 +113,10 @@ export function transition(t: Tournament, input: TransitionInput, now: EpochMs):
 
   return {
     tournament: next,
-    events: [{ type: 'lifecycle_transition', at: now, payload: { action, from: t.status, to } }],
+    events: [
+      ...events,
+      { type: 'lifecycle_transition', at: now, payload: { action, from: t.status, to } },
+    ],
   };
 }
 

@@ -104,6 +104,23 @@ describe('lifecycle', () => {
     expect(transition(ready, { action: 'edit' }, T0).tournament.status).toBe('draft');
   });
 
+  it('complete freezes a running clock and logs segments that started meanwhile', () => {
+    const begun = transition(withStatus('ready'), { action: 'start', schedule: basic }, T0).tournament;
+    const running = applyClockCommand(begun, basic, T0, start).tournament;
+    const r = transition(running, { action: 'complete', schedule: basic }, T0 + 12 * MINUTE);
+    expect(r.tournament.clock).toEqual({
+      status: 'paused',
+      segmentIndex: 1,
+      remainingMs: 8 * MINUTE,
+      revision: (running.clock?.revision ?? 0) + 1,
+      updatedAt: T0 + 12 * MINUTE,
+    });
+    expect(r.events.map((e) => e.type)).toEqual(['segment_started', 'lifecycle_transition']);
+    expect(() =>
+      transition(running, { action: 'cancel', schedule: { ...basic, id: 'other' } }, T0),
+    ).toThrow(InvalidTransition);
+  });
+
   it('complete and cancel record endedAt', () => {
     expect(
       transition(withStatus('active'), { action: 'complete' }, T0 + 9).tournament,

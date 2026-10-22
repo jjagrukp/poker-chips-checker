@@ -270,6 +270,33 @@ export function recover(state: ClockState, now: EpochMs): CommandResult | null {
   };
 }
 
+/**
+ * In-session clock skew (spec 03 §3): the device clock jumped by `skewMs` (wall-clock delta
+ * minus monotonic delta). Shifts running deadlines by the same amount so the time left is
+ * kept, then normalises at `now`.
+ */
+export function reanchor(state: ClockState, now: EpochMs, skewMs: Ms): CommandResult {
+  const { anchor } = state;
+  const shift = (deadline: EpochMs | undefined) =>
+    deadline === undefined ? undefined : deadline + skewMs;
+  const shifted = compact<ClockAnchor>({
+    ...anchor,
+    deadline: shift(anchor.deadline),
+    interlude: anchor.interlude
+      ? compact<Interlude>({ ...anchor.interlude, deadline: shift(anchor.interlude.deadline) })
+      : undefined,
+    updatedAt: now,
+  });
+  const n = normalise(state.schedule, shifted, now, state.options);
+  return {
+    anchor: { ...n.anchor, revision: anchor.revision + 1, updatedAt: now },
+    events: [
+      ...startedEvents(n.started),
+      { type: 'clock_skew', at: now, payload: { deltaMs: Math.round(skewMs) } },
+    ],
+  };
+}
+
 // ── internals ────────────────────────────────────────────────────────────────
 
 interface Change {

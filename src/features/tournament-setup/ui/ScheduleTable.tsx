@@ -16,13 +16,22 @@ const DEFAULT_BREAK_MIN = 10;
 
 interface Props {
   schedule: Schedule;
-  editor?: { config: HoldemConfig; ctx: ModuleContext; onEdit: (schedule: Schedule) => void };
+  editor?: {
+    config: HoldemConfig;
+    ctx: ModuleContext;
+    onEdit: (schedule: Schedule) => void;
+    /** Running tournament: segments before this index are locked (spec 03 §7). */
+    lockedBefore?: number;
+  };
+  /** Highlights the segment being played. */
+  currentIndex?: number;
 }
 
-export function ScheduleTable({ schedule, editor }: Props) {
+export function ScheduleTable({ schedule, editor, currentIndex }: Props) {
   const t = useT();
   const [editing, setEditing] = useState<string | null>(null);
   const segments = schedule.segments;
+  const locked = editor?.lockedBefore ?? 0;
   let elapsedMin = 0;
 
   const apply = (edit: () => Schedule) => {
@@ -71,11 +80,13 @@ export function ScheduleTable({ schedule, editor }: Props) {
             const data = levelData(segment);
             const next = segments[index + 1];
             const canAddBreak =
-              segment.kind === 'level' && next !== undefined && next.kind !== 'break';
+              index >= locked && segment.kind === 'level' && next !== undefined && next.kind !== 'break';
+            const current = index === currentIndex;
             return (
               <tr
                 key={segment.id}
-                className={`border-b border-ink-muted/20 ${segment.kind === 'break' ? 'text-state-break' : ''}`}
+                aria-current={current ? 'step' : undefined}
+                className={`border-b border-ink-muted/20 ${segment.kind === 'break' ? 'text-state-break' : ''} ${current ? 'bg-surface-raised' : ''}`}
               >
                 <th scope="row" className="py-2 pr-2 font-semibold">
                   {segment.kind === 'level'
@@ -94,7 +105,7 @@ export function ScheduleTable({ schedule, editor }: Props) {
                 {editor && (
                   <td className="py-1">
                     <div className="flex flex-wrap gap-1">
-                      {segment.kind === 'level' ? (
+                      {index < locked ? null : segment.kind === 'level' ? (
                         <>
                           <button
                             type="button"
@@ -123,7 +134,7 @@ export function ScheduleTable({ schedule, editor }: Props) {
                             </button>
                           )}
                         </>
-                      ) : (
+                      ) : index === locked ? null : (
                         <button
                           type="button"
                           className={buttonQuiet}

@@ -71,7 +71,7 @@ export function Home() {
                 <span>
                   <span className="block font-semibold">{x.name ?? t('home.untitled')}</span>
                   <span className="text-sm text-ink-muted">
-                    {t(x.status === 'draft' ? 'home.status.draft' : 'home.status.ready')}
+                    {t(`home.status.${x.status}`)}
                   </span>
                 </span>
                 <Link

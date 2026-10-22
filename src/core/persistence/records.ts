@@ -35,6 +35,8 @@ export const SettingsSchema = z.object({
   /** Result of `navigator.storage.persist()`, shown in Settings (spec 02 §7.6). */
   storagePersistence: StoragePersistenceSchema.optional(),
   durabilityNoticeDismissedAt: epoch.optional(),
+  /** Live-clock mute toggle; alert preferences proper arrive in M7. */
+  alertsMuted: z.boolean().optional(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 

@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
+import type { ClockPlatform } from '@/features/live-clock/state/clock-store';
 import { inventoryRecord, type Inventory } from '@/features/chip-inventory/domain/inventory';
 import { openDatabase } from '@/infrastructure/indexeddb/database';
 import { createRepositories } from '@/infrastructure/indexeddb/repositories';
@@ -10,6 +11,8 @@ import { createRepositories } from '@/infrastructure/indexeddb/repositories';
 export interface Services {
   repos: Repositories<Inventory>;
   ctx: ModuleContext;
+  /** Tests inject fakes; the app uses the browser APIs (clock-platform.ts). */
+  clockPlatform?: ClockPlatform | undefined;
 }
 
 export const ServicesContext = createContext<Services | null>(null);
