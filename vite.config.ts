@@ -25,6 +25,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'tests/integration/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/core/**'],
+      exclude: ['**/*.test.ts', 'src/core/testing/**'],
+      reporter: ['text-summary', 'text'],
+      thresholds: { 'src/core/timer/**': { branches: 95 } },
+    },
   },
 });

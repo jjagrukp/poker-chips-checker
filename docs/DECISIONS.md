@@ -46,6 +46,25 @@ layer banned per depth; non-normalised/root paths and dynamic import banned); fo
 targets banned. Core also bans ambient time/timers. Component tests: Testing Library + jsdom.
 Why: no resolver plugin needed; relative paths are ambiguous (core/modules vs src/modules).
 
+D11 — Coverage tooling
+`@vitest/coverage-v8` (pinned to the Vitest version) for the M1 ≥ 95% branch gate on
+`src/core/timer` (`npm run test:coverage`). Why: zero-config with Vitest; no Istanbul build step.
+
+D12 — Test-only modules outside src
+`tests/fixtures` + `tests/integration` compile under `tsconfig.app.json` (need `@/`), and Vitest
+includes `tests/integration/**/*.test.ts`. Core unit-test helpers live in `src/core/testing/`
+(coverage-excluded). Why: fixtures must never ship, but must type-check against core.
+
+D13 — Clock model details (refines 03)
+`awaitingHost` is a paused anchor with `holdAtIndex === segmentIndex`. Clock went backwards
+> 5 s → `deriveClock` freezes at `updatedAt` and sets `clockWentBackwards`. Lifecycle `start`
+creates an idle anchor; the clock `start` command runs it. `endBreak` always resumes play.
+Pausing in overtime drops the overtime count. Completion is a `lifecycle_transition` event.
+
+D14 — Opaque cross-layer types in core
+`Tournament.allocation` and `GameModule.allocate` inventory/result are `unknown` in core because
+their types live in chip-inventory/domain, which core may not import. Modules narrow them.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)
