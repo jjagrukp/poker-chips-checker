@@ -87,6 +87,16 @@ D18 — Tab roles
 Viewers queue on the Web Lock and become controller automatically when it's released; "Take
 control" uses `steal`. BroadcastChannel messages carry no data — viewers re-read from IndexedDB.
 
+D19 — Allocation details (refines 05 §3–4)
+Unknown firstSB: smallest allocated value ≤ stack / (2 × depth), depth default 100 BB. Recommend:
+nice set tried per scale (×1, ×0.1, ×10, …), first scale with a valid stack wins; ties → smaller stack;
+known BB must give 50–200 BB. Nearest stacks step by the values' gcd, not the smallest chip, and use an
+exact knapsack check (also tells "impossible" from "node limit"). >5 types to value → extended set.
+
+D20 — Chip reference images deferred
+`ChipType.referenceImage` (Blob) is left out until M9: Blobs don't survive the JSON backup and would make
+all-or-nothing import fail. M9 decides storage (separate store or data URL) with a migration.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)

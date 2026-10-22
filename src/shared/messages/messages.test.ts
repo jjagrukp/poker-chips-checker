@@ -1,5 +1,5 @@
 import { messages } from './catalogue';
-import { resolveMessage, t } from './index';
+import { interpolate, resolveMessage, t } from './index';
 
 describe('t', () => {
   it('returns plain strings regardless of tone', () => {
@@ -16,6 +16,18 @@ describe('t', () => {
 
   it('defaults to the playful tone', () => {
     expect(t('celebration.winner')).toBe(messages['celebration.winner'].playful);
+  });
+});
+
+describe('interpolation', () => {
+  it('fills placeholders and leaves unknown ones alone', () => {
+    expect(t('allocation.error.invalidPlayers', 'neutral', {})).toBe(
+      'You need at least 2 players.',
+    );
+    expect(t('chips.error.unassigned', 'neutral', { colour: 'Red' })).toBe(
+      'Red: give it a value or mark it as not used.',
+    );
+    expect(interpolate('{a} and {b}', { a: 1 })).toBe('1 and {b}');
   });
 });
 

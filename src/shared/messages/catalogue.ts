@@ -35,6 +35,46 @@ export const messages = {
   'tabs.viewerMode': "This tournament is being run in another tab. You're viewing it here.",
   'tabs.takeControl': 'Take control',
 
+  'chips.error.tooManyChipTypes': 'Use at most {max} chip types (you have {count}).',
+  'chips.error.invalidQuantity': '{colour}: enter a whole number of chips, 0 or more.',
+  'chips.error.unconfirmed': '{colour}: check this row, then confirm it.',
+  'chips.error.unknownChipType': "A value is set for a chip type that isn't in this set.",
+  'chips.error.invalidValue': 'Chip values must be whole numbers above 0.',
+  'chips.error.unassigned': '{colour}: give it a value or mark it as not used.',
+  'chips.error.noChipsUsed': 'Choose at least one chip type to use.',
+  'allocation.error.invalidPlayers': 'You need at least 2 players.',
+  'allocation.error.invalidStack': 'The starting stack must be a whole number above 0.',
+  'allocation.error.invalidBlinds': 'Blinds must be whole numbers above 0.',
+  'allocation.error.rejected': "That chip split didn't add up, so it wasn't used. Try again.",
+  'allocation.warning.fewChips': 'Only {count} chips each. {min} or more is easier to play with.',
+  'allocation.warning.manyChips': '{count} chips each. More than {max} gets hard to stack.',
+  'allocation.warning.fewSmallChips': 'Only {count} chips of the {value} each for paying blinds.',
+  'allocation.warning.fewDenominations':
+    'Only {count} chip values used, so making change is harder.',
+  'allocation.warning.notPyramid': 'Some higher-value chips outnumber lower-value ones.',
+  'allocation.warning.dominantType': '{colour} chips make up more than half of each stack.',
+  'allocation.warning.searchTruncated':
+    'There were too many combinations to check them all. This is the best one found.',
+  'allocation.impossible.searchLimit':
+    'That stack is possible, but there were too many combinations to find it. Try a nearby stack.',
+  'allocation.impossible.noChipsEach':
+    "There aren't enough chips of any type to give all {players} players at least one.",
+  'allocation.impossible.capped':
+    '{colour} chips: {quantity} for {players} players caps each player at {cap}. The biggest possible stack is {maxStack}.',
+  'allocation.impossible.tooBig':
+    'Stacks are limited to {max} chips of each type, so the biggest possible stack is {maxStack}.',
+  'allocation.impossible.smallBlind':
+    'The smallest chip ({colour}, {value}) has to divide the first small blind of {firstSB}.',
+  'allocation.impossible.stackTooSmall':
+    'The smallest chip ({colour}, {value}) is too big for a stack this size.',
+  'allocation.impossible.notDivisible':
+    "A stack of {stack} can't be made: stacks go up in steps of {step}.",
+  'allocation.impossible.noCombination': "These chips can't make that exact stack.",
+  'allocation.recommend.none':
+    "These chips can't make any standard starting stack for this many players.",
+  'allocation.recommend.explanation':
+    '{stack} gives each player {chips} chips across {denominations} values, with the fewest compromises.',
+
   'transition.chipsCounted': {
     playful: 'The chips have been counted. Trust issues remain.',
     neutral: 'Chip count complete.',
