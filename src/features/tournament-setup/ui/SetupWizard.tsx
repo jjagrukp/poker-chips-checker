@@ -4,6 +4,7 @@ import { useStore, type StoreApi } from 'zustand';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
+import type { PhotoService } from '@/features/chip-inventory/photo/service';
 import { buttonPrimary, buttonSecondary } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import { createWizardStore, type WizardStore } from '../state/store';
@@ -31,6 +32,8 @@ interface Props {
   step: string | undefined;
   repos: Repositories<Inventory>;
   ctx: ModuleContext;
+  /** Absent → no photo route (spec 06: the app works fully without AI). */
+  photo?: PhotoService | undefined;
 }
 
 type Loaded =
@@ -40,7 +43,7 @@ type Loaded =
   | { kind: 'notDraft' }
   | { kind: 'ok'; store: StoreApi<WizardStore> };
 
-export function SetupWizard({ tournamentId, step, repos, ctx }: Props) {
+export function SetupWizard({ tournamentId, step, repos, ctx, photo }: Props) {
   const t = useT();
   const [loaded, setLoaded] = useState<Loaded>({ kind: 'loading' });
 
@@ -79,7 +82,7 @@ export function SetupWizard({ tournamentId, step, repos, ctx }: Props) {
         </main>
       );
     case 'ok':
-      return <Wizard env={{ store: loaded.store, repos, ctx }} step={step} />;
+      return <Wizard env={{ store: loaded.store, repos, ctx, photo }} step={step} />;
   }
 }
 

@@ -1,7 +1,15 @@
 import { useId } from 'react';
 import type { ValidationReport } from '@/core/validation/report';
 import { IssueList } from '@/shared/components/IssueList';
-import { buttonPrimary, buttonQuiet, buttonSecondary, card, hint, input, label } from '@/shared/components/styles';
+import {
+  buttonPrimary,
+  buttonQuiet,
+  buttonSecondary,
+  card,
+  hint,
+  input,
+  label,
+} from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import { newRow, type ChipRow } from './rows';
 
@@ -111,7 +119,8 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
   const id = useId();
   const name = row.colour.trim() || t('inventory.row.unnamed', { n: index + 1 });
   const quantity = /^\d+$/.test(row.quantityText.trim()) ? Number(row.quantityText) : 0;
-  const bump = (delta: number) => onChange({ quantityText: String(Math.max(0, quantity + delta)) });
+  const bump = (delta: number) =>
+    onChange({ quantityText: String(Math.max(0, quantity + delta)), checkCount: false });
   const stepButton = 'min-h-11 min-w-11 rounded-lg bg-surface text-xl font-bold';
 
   return (
@@ -175,8 +184,9 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
             className={input}
             inputMode="numeric"
             aria-invalid={invalid.quantity}
+            aria-describedby={row.checkCount ? `${id}-check` : undefined}
             value={row.quantityText}
-            onChange={(e) => onChange({ quantityText: e.target.value })}
+            onChange={(e) => onChange({ quantityText: e.target.value, checkCount: false })}
           />
           <button
             type="button"
@@ -187,6 +197,11 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
             +
           </button>
         </div>
+        {row.checkCount && (
+          <p id={`${id}-check`} className="text-sm font-semibold text-state-warning">
+            {t('inventory.row.checkCount')}
+          </p>
+        )}
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor={`${id}-value`} className={label}>
@@ -202,6 +217,9 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
           onChange={(e) => onChange({ valueText: e.target.value })}
         />
       </div>
+      {!row.confirmed && row.notes && (
+        <p className={`${hint} sm:col-span-2`}>{t('inventory.row.aiNote', { note: row.notes })}</p>
+      )}
       <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
         <label className="flex min-h-11 items-center gap-2">
           <input
@@ -213,7 +231,11 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
           {t('inventory.row.used')}
         </label>
         {!row.confirmed && (
-          <button type="button" className={buttonSecondary} onClick={() => onChange({ confirmed: true })}>
+          <button
+            type="button"
+            className={buttonSecondary}
+            onClick={() => onChange({ confirmed: true, checkCount: false })}
+          >
             {t('inventory.row.confirm', { name })}
           </button>
         )}

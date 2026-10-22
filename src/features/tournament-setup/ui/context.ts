@@ -3,6 +3,7 @@ import { useStore, type StoreApi } from 'zustand';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
+import type { PhotoService } from '@/features/chip-inventory/photo/service';
 import type { WizardStore } from '../state/store';
 import type { WizardState } from '../state/wizard';
 
@@ -10,6 +11,7 @@ export interface WizardEnv {
   store: StoreApi<WizardStore>;
   repos: Repositories<Inventory>;
   ctx: ModuleContext;
+  photo?: PhotoService | undefined;
 }
 
 export const WizardContext = createContext<WizardEnv | null>(null);

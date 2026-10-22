@@ -23,6 +23,8 @@ export const ChipRowSchema = z.object({
   confirmed: z.boolean(),
   printedValue: z.number().int().positive().optional(),
   notes: z.string().optional(),
+  /** Quantity was estimated from a photo: show "check this" until the host edits or confirms it. */
+  checkCount: z.boolean().optional(),
 });
 export type ChipRow = z.infer<typeof ChipRowSchema>;
 

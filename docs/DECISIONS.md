@@ -147,7 +147,19 @@ startedAt/endedAt), host-editable in whole minutes. Positions list every place 1
 stores the full HoldemConfig but applying it copies only players/duration/structure fields; stack and chips come
 from the new inventory. Duplicate copies config + setupDraft (edited schedules renumbered, else regenerated).
 
+D29 — No chip reference images (closes D20)
+The photo is never stored (spec 06 §1), so `ChipType.referenceImage` is dropped rather than added: no Blob store,
+no migration, and backups stay pure JSON. Photo proposals become unconfirmed `ChipRow`s; `ChipRow.checkCount`
+(optional, no version bump) flags an AI-estimated count until the host edits it or marks the row as right.
+After the canvas re-encode the client also strips APP1/APP13/COM segments: Safari's encoder writes its own EXIF.
+
+D30 — AI endpoint details (refines 06 §2, D6; resolves Q1)
+Raw `fetch` to the Messages API (no SDK dependency; the handler stays a plain Web Fetch function). Structured output
+via a `strict: true` tool with `tool_choice: auto` + a system instruction, not forced tool use: current Opus/Sonnet
+models reject forced `tool_choice`, and `CHIP_VISION_MODEL` may name any model. Default model `claude-haiku-5-5`.
+Q1: no Turnstile; per-IP hourly limit + global daily cap behind a `RateLimiter` interface. The in-memory one is
+per instance, so M11 swaps in a durable store (e.g. KV). A Vite plugin serves `/api/*` in dev/preview.
+
 ## Open questions (resolve when reached, record answer above)
-- Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
-  Turnstile? (Decide in M9; default: rate limit + daily global cap only.)
+- Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

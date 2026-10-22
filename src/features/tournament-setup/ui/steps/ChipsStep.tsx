@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
+import { mergeProposals } from '@/features/chip-inventory/photo/to-rows';
 import { InventoryReview } from '@/features/chip-inventory/ui/InventoryReview';
+import { PhotoImport } from '@/features/chip-inventory/ui/PhotoImport';
 import { rowsReport, suggestRowValues, toInventory } from '@/features/chip-inventory/ui/rows';
 import { buttonSecondary, card, hint } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
@@ -13,16 +15,17 @@ import {
 } from '../../state/wizard';
 import { useUpdate, useWizard, useWizardEnv } from '../context';
 
-// Step 3 (spec 01 §5): a saved set or manual entry, both ending on the same review.
-// The photo route arrives in M9 behind a feature flag.
+// Step 3 (spec 01 §5): a saved set, a photo (spec 06, when enabled) or manual entry, all
+// ending on the same review. Photo proposals arrive as unconfirmed rows.
 
 export function ChipsStep() {
   const t = useT();
-  const { repos, ctx } = useWizardEnv();
+  const { repos, ctx, photo } = useWizardEnv();
   const update = useUpdate();
   const draft = useWizard((s) => s.draft);
   const [saved, setSaved] = useState<Inventory[]>([]);
   const [saveFailed, setSaveFailed] = useState(false);
+  const reviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,19 +85,30 @@ export function ChipsStep() {
           <p className={hint}>{t('setup.chips.savedHint')}</p>
         </div>
       )}
+      {photo && (
+        <PhotoImport
+          service={photo}
+          onProposals={(proposals) =>
+            update((s) => setRows(s, mergeProposals(s.draft.rows, proposals, ctx.newId)))
+          }
+          onManual={() => reviewRef.current?.focus()}
+        />
+      )}
       <p className={hint}>{t('setup.chips.manualHint')}</p>
 
-      <InventoryReview
-        name={draft.inventoryName}
-        rows={draft.rows}
-        report={report}
-        confirmed={draft.confirmed !== null}
-        newId={ctx.newId}
-        onNameChange={(name) => update((s) => setInventoryName(s, name))}
-        onRowsChange={(rows) => update((s) => setRows(s, rows))}
-        onSuggest={() => update((s) => setRows(s, suggestRowValues(s.draft.rows, meta)))}
-        onConfirm={() => void confirm()}
-      />
+      <div ref={reviewRef} tabIndex={-1} className="outline-none">
+        <InventoryReview
+          name={draft.inventoryName}
+          rows={draft.rows}
+          report={report}
+          confirmed={draft.confirmed !== null}
+          newId={ctx.newId}
+          onNameChange={(name) => update((s) => setInventoryName(s, name))}
+          onRowsChange={(rows) => update((s) => setRows(s, rows))}
+          onSuggest={() => update((s) => setRows(s, suggestRowValues(s.draft.rows, meta)))}
+          onConfirm={() => void confirm()}
+        />
+      </div>
       {saveFailed && <p role="alert">{t('setup.chips.saveFailed')}</p>}
     </section>
   );

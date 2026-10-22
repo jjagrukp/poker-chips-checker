@@ -7,9 +7,9 @@ import { SetupWizard } from '@/features/tournament-setup/ui/SetupWizard';
 
 export function SetupRoute() {
   const { id, step } = useParams();
-  const { repos, ctx } = useServices();
+  const { repos, ctx, photo } = useServices();
   if (!id) return <Navigate to="/" replace />;
-  return <SetupWizard key={id} tournamentId={id} step={step} repos={repos} ctx={ctx} />;
+  return <SetupWizard key={id} tournamentId={id} step={step} repos={repos} ctx={ctx} photo={photo} />;
 }
 
 export function TournamentRoute() {

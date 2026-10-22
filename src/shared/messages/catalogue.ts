@@ -214,6 +214,48 @@ export const messages = {
     'Suggested values give the most numerous chips the lowest value. Check them before you confirm.',
   'inventory.confirm': 'Confirm inventory',
   'inventory.confirmed': 'Inventory confirmed and saved.',
+  'inventory.row.checkCount': 'Estimated from your photo. Count these to check.',
+  'inventory.row.aiNote': 'From the photo: {note}',
+
+  'photo.title': 'Start from a photo',
+  'photo.privacy': "Your photo is sent to an AI service to identify chip colours. It isn't stored.",
+  'photo.privacyMore': 'What happens to my photo?',
+  'photo.privacyDetail':
+    "We shrink the photo on your device and remove its location and camera details first. The AI service only sees the picture, we don't keep it, and you check every result before anything is saved.",
+  'photo.tips':
+    'For the best result: one stack per colour, spread out, good light, shot from above.',
+  'photo.pick': 'Take or choose a photo',
+  'photo.preparing': 'Getting your photo ready…',
+  'photo.analysing': 'Looking at your chips…',
+  'photo.cancel': 'Cancel',
+  'photo.manual': 'Enter manually',
+  'photo.retake': 'Try another photo',
+  'photo.found': {
+    playful: 'Found {count} chip types. Check each row below. The AI has been known to squint.',
+    neutral: 'Found {count} chip types. Check each row below, then mark it as right.',
+  },
+  'photo.foundNone': "We couldn't pick out any chips. Try another photo or enter them manually.",
+  'photo.notChips': "That doesn't look like chips. Try another photo or enter them manually.",
+  'photo.unclear': 'The photo was hard to read, so check these closely.',
+  'photo.issuesIntro': 'A retake may help:',
+  'photo.issue.blurry': 'The photo is blurry. Hold still or tap to focus.',
+  'photo.issue.dark': "It's too dark. Find more light.",
+  'photo.issue.glare': 'There is glare. Move away from direct light.',
+  'photo.issue.overlapping_stacks': 'Stacks overlap. Spread them out.',
+  'photo.issue.partial': 'Some chips are cut off. Fit them all in the frame.',
+  'photo.issue.other': 'Something made the photo hard to read.',
+  'photo.error.unsupported_type':
+    "That file type isn't supported. Use a JPEG, PNG, WebP or HEIC photo.",
+  'photo.error.too_large': 'That photo is too large. Try a smaller one.',
+  'photo.error.decode_failed': "We couldn't open that photo. Try a JPEG or PNG.",
+  'photo.error.bad_image': "We couldn't open that photo. Try a JPEG or PNG.",
+  'photo.error.rate_limited':
+    "You've used the photo feature a lot in the last hour. Try again later, or enter your chips manually.",
+  'photo.error.daily_cap': 'The photo feature is busy today. Enter your chips manually for now.',
+  'photo.error.timeout': 'That took too long. Try again, or enter your chips manually.',
+  'photo.error.network':
+    "We couldn't reach the photo service. Check your connection, or enter your chips manually.",
+  'photo.error.generic': "The photo couldn't be analysed. Enter your chips manually instead.",
   'chips.breakdown.line': '{count} × {colour} ({value})',
   'chips.breakdown.unnamed': 'Unnamed chip',
 
