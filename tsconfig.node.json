@@ -13,5 +13,10 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/app/configuration/brand.ts", "vite.config.ts", "playwright.config.ts", "tests/e2e"]
+  "include": [
+    "src/app/configuration/brand.ts",
+    "vite.config.ts",
+    "playwright.config.ts",
+    "tests/e2e"
+  ]
 }

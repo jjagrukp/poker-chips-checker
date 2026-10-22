@@ -65,6 +65,28 @@ D14 — Opaque cross-layer types in core
 `Tournament.allocation` and `GameModule.allocate` inventory/result are `unknown` in core because
 their types live in chip-inventory/domain, which core may not import. Modules narrow them.
 
+D15 — Persistence shape (refines 02 §7)
+`RecordType<T>` (name, version, schema, migrations) per record; `migrateRecord` is pure, the IDB
+layer writes migrated records back and quarantines failures in the same transaction. Inventory's
+RecordType is injected by the composition root (core can't see chip-inventory). DB name fixed
+(`tournament-platform`), not branded. `fake-indexeddb` (dev) for repo tests. Why: core stays pure.
+Write-back stores the parsed value, so Zod strips unknown keys: migrations must map every field.
+
+D16 — Atomic tournament writes
+`TournamentRepo.commit({tournament, schedules?, events?, expectedClockRevision?})` writes all in one
+transaction, serialised per tournament id (keyed promise queue); event `seq` assigned in that tx.
+`expectedClockRevision` is the no-Web-Locks fallback guard; mismatch → `{ok:false, conflict}`.
+Any failure aborts the tx. `seq` orders events per tournament; it may be reused after quarantine.
+
+D17 — Backup import rules
+All-or-nothing (any invalid record or write error imports nothing). Id clash → new id with
+references (scheduleId, inventoryId, schedule_edited ids, event tournamentId) remapped. Settings
+are a singleton: existing settings win. Export collects schedules referenced by tournaments/events.
+
+D18 — Tab roles
+Viewers queue on the Web Lock and become controller automatically when it's released; "Take
+control" uses `steal`. BroadcastChannel messages carry no data — viewers re-read from IndexedDB.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: Abuse protection for the AI endpoint beyond IP rate limiting — add Cloudflare
   Turnstile? (Decide in M9; default: rate limit + daily global cap only.)
