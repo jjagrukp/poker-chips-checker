@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   ALERT_TYPES,
   alertEnabled,
@@ -21,7 +21,8 @@ interface Props {
   notifier: AlertNotifier;
   onPrefs: (patch: AlertPrefs) => void;
   onToggleMute: () => void;
-  onClose: () => void;
+  /** Left out where the panel isn't a pop-over (Settings). */
+  onClose?: () => void;
 }
 
 const checkbox = 'h-5 w-5 shrink-0 accent-accent';
@@ -31,6 +32,12 @@ export function AlertSettings({ prefs, muted, audio, notifier, onPrefs, onToggle
   const t = useT();
   const id = useId();
   const [access, setAccess] = useState(() => notifier.access());
+  const title = useRef<HTMLHeadingElement>(null);
+  // As a pop-over it takes focus when it opens; the opener gets it back on close.
+  const popover = onClose !== undefined;
+  useEffect(() => {
+    if (popover) title.current?.focus();
+  }, [popover]);
 
   const test = async (type: Exclude<AlertType, 'recovery'>) => {
     // A test press is a gesture, so it can unlock audio too.
@@ -50,7 +57,7 @@ export function AlertSettings({ prefs, muted, audio, notifier, onPrefs, onToggle
 
   return (
     <section aria-labelledby={id} className={`${card} flex flex-col gap-4`}>
-      <h2 id={id} className="font-display text-2xl">
+      <h2 id={id} ref={title} tabIndex={-1} className="font-display text-2xl">
         {t('alerts.heading')}
       </h2>
       <label className={row}>
@@ -123,9 +130,11 @@ export function AlertSettings({ prefs, muted, audio, notifier, onPrefs, onToggle
         <p className={hint}>{t('alerts.notifications.hint')}</p>
       </div>
       <p className={hint}>{t('alerts.iosNote')}</p>
-      <button type="button" className={`${buttonSecondary} self-start`} onClick={onClose}>
-        {t('alerts.close')}
-      </button>
+      {onClose && (
+        <button type="button" className={`${buttonSecondary} self-start`} onClick={onClose}>
+          {t('alerts.close')}
+        </button>
+      )}
     </section>
   );
 }

@@ -15,7 +15,7 @@ export function SetupRoute() {
 export function TournamentRoute() {
   const { id } = useParams();
   const { repos, ctx, clockPlatform } = useServices();
-  const [platform] = useState(() => clockPlatform ?? browserClockPlatform());
+  const [platform] = useState(() => clockPlatform ?? browserClockPlatform(repos.settings));
   if (!id) return <Navigate to="/" replace />;
   return <ClockScreen key={id} tournamentId={id} repos={repos} ctx={ctx} platform={platform} />;
 }

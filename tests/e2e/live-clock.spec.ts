@@ -1,53 +1,13 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { noAxeViolations, setUpReadyTournament } from './helpers';
 
 // M6 exit: the clock runs from derived time, stays paused across reloads, catches up after a
 // "sleep" with a summary, and other tabs are read-only viewers.
 
-async function noAxeViolations(page: Page) {
-  const { violations } = await new AxeBuilder({ page }).analyze();
-  expect(violations).toEqual([]);
-}
-
-async function addChip(page: Page, index: number, colour: string, quantity: string, value: string) {
-  await page.getByRole('button', { name: 'Add chip type' }).click();
-  await page
-    .getByRole('listitem', { name: `Chip type: Chip type ${index}` })
-    .getByLabel('Colour')
-    .fill(colour);
-  const row = page.getByRole('listitem', { name: `Chip type: ${colour}` });
-  await row.getByLabel('How many').fill(quantity);
-  await row.getByLabel('Value in this tournament').fill(value);
-}
-
-async function setUpReadyTournament(page: Page) {
-  const next = () => page.getByRole('button', { name: 'Next' }).click();
-  await page.goto('/');
-  await page.getByRole('button', { name: 'New tournament' }).click();
-  await next();
-  await next();
-  await addChip(page, 1, 'White', '100', '25');
-  await addChip(page, 2, 'Red', '100', '100');
-  await addChip(page, 3, 'Green', '50', '500');
-  await addChip(page, 4, 'Black', '50', '1000');
-  await page.getByRole('button', { name: 'Confirm inventory' }).click();
-  await expect(page.getByText('Inventory confirmed and saved.')).toBeVisible();
-  await next();
-  await expect(page.getByText(/^Starting stack: /)).toBeVisible();
-  await next();
-  await next();
-  await page.getByRole('button', { name: 'Start' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Ready to play' })).toBeVisible();
-}
-
 test('runs the live clock through pause, reload, sleep and a viewer tab', async ({
   page,
   context,
-  browserName,
 }) => {
-  // WebKit never finishes a navigation once Playwright's fake clock has been fast-forwarded
-  // (reload and goto alike). Clock behaviour is covered by unit/component tests; revisit in M10.
-  test.skip(browserName === 'webkit', 'WebKit navigation hangs under page.clock after fastForward');
   // Fake time flows normally until the test fast-forwards it.
   await page.clock.install({ time: new Date('2026-10-23T19:00:00+11:00') });
   await setUpReadyTournament(page);

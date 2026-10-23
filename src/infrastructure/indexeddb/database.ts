@@ -29,10 +29,21 @@ export interface StorageSchema extends DBSchema {
 
 export type StorageDatabase = IDBPDatabase<StorageSchema>;
 
-export async function openDatabase(name: string = DB_NAME): Promise<StorageDatabase> {
+export interface OpenOptions {
+  /** A newer version in another tab needs the database: this connection is closed first. */
+  onReplaced?: () => void;
+}
+
+export async function openDatabase(
+  name: string = DB_NAME,
+  options: OpenOptions = {},
+): Promise<StorageDatabase> {
   const db: StorageDatabase = await openDB<StorageSchema>(name, DB_VERSION, {
-    // A newer version in another tab is upgrading: let it proceed (reload notice comes in M10).
-    blocking: () => db.close(),
+    // Let the other tab's upgrade proceed; this tab can only reload (spec 02 §7.3).
+    blocking: () => {
+      db.close();
+      options.onReplaced?.();
+    },
     upgrade(db, oldVersion, _newVersion, tx) {
       // Each block upgrades from one db version; add `if (oldVersion < 2)` etc. below.
       if (oldVersion < 1) {
@@ -51,4 +62,11 @@ export async function openDatabase(name: string = DB_NAME): Promise<StorageDatab
     },
   });
   return db;
+}
+
+/** "Delete all data" (Settings): empties every store except `meta` in one transaction. */
+export async function clearAllData(db: StorageDatabase): Promise<void> {
+  const stores = [...DATA_STORES, 'quarantine'] as const;
+  const tx = db.transaction(stores, 'readwrite');
+  await Promise.all([...stores.map((store) => tx.objectStore(store).clear()), tx.done]);
 }

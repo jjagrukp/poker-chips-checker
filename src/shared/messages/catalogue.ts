@@ -12,7 +12,6 @@ export type Message = string | Variants;
 export const messages = {
   'home.newTournament': 'New tournament',
   'home.settings': 'Settings',
-  'home.comingSoon': 'Coming soon',
   'home.saved': 'Saved tournaments',
   'home.untitled': 'Untitled tournament',
   'home.continueSetup': 'Continue setup',
@@ -54,11 +53,77 @@ export const messages = {
   'backup.import.invalidFormat': "That file isn't a backup from this app.",
   'backup.import.invalidRecords':
     "That backup contains records that couldn't be read. Nothing was imported.",
+  'backup.import.tooLarge': "That file is too big to be a backup from this app. Nothing was imported.",
   'backup.import.writeFailed': "The backup couldn't be saved. Nothing was imported.",
   'tabs.viewerMode': "This tournament is being run in another tab. You're viewing it here.",
   'tabs.takeControl': 'Take control',
   'storage.unavailable':
     "This browser won't let the app save anything, so it can't run here. Private browsing can cause this.",
+  'storage.durability.installHint': 'On iPhone or iPad, tap Share, then Add to Home Screen.',
+  'storage.quarantine.deleted': 'Set-aside data deleted.',
+
+  'app.update.ready': {
+    playful: "A fresh version is ready. Reload when there's a lull in play.",
+    neutral: 'A new version is ready. Reload to use it.',
+  },
+  'app.notices': 'App notices',
+  'app.update.reload': 'Reload',
+  'app.update.later': 'Later',
+  'app.storageReplaced': 'The app was updated in another tab. Reload this tab to keep going.',
+
+  'settings.title': 'Settings',
+  'settings.home': 'Home',
+  'settings.tone.heading': 'Tone',
+  'settings.tone.playful': 'Playful',
+  'settings.tone.playful.hint': 'Cheeky messages at level changes, breaks and the finish.',
+  'settings.tone.neutral': 'Plain',
+  'settings.tone.neutral.hint': 'Straightforward messages, same information.',
+  'settings.defaults.heading': 'New tournaments',
+  'settings.defaults.hint': 'You can still change this for each tournament during setup.',
+  'settings.saveFailed': "That setting couldn't be saved. Try again.",
+  'settings.data.heading': 'Your data',
+  'settings.data.persistence.unknown':
+    'The app asks your browser to protect saved data when you start your first tournament.',
+  'settings.data.protect': 'Protect saved data',
+  'settings.data.export': 'Export backup',
+  'settings.data.export.hint': 'Saves every tournament, chip set, preset and setting to one file.',
+  'settings.data.exportFailed': "The backup couldn't be created. Try again.",
+  'settings.data.import': 'Import backup',
+  'settings.data.import.hint':
+    'Adds everything in a backup file. If something is already here, you keep both copies.',
+  'settings.data.importing': 'Importing…',
+  'settings.data.imported': {
+    playful: 'Backup imported. Welcome back, old friends.',
+    neutral: 'Backup imported.',
+  },
+  'settings.data.deleteAll': 'Delete all data',
+  'settings.data.deleteAll.confirm':
+    "Delete every tournament, chip set, preset and setting in this browser? This can't be undone. Export a backup first if you might need them.",
+  'settings.data.deleteAll.confirmButton': 'Delete everything',
+  'settings.data.deleteAll.done': {
+    playful: 'Clean slate. All data deleted.',
+    neutral: 'All data deleted.',
+  },
+  'settings.data.deleteAll.failed': "Your data couldn't be deleted. Try again.",
+  'settings.about.heading': 'About and limitations',
+  'settings.about.intro': '{name} runs entirely in your browser. A few things to know:',
+  'settings.about.storage':
+    'Everything is saved only in this browser on this device. There are no accounts and no cloud copy, so export a backup now and then.',
+  'settings.about.safari':
+    "Safari may delete data from sites you haven't visited for 7 days. Adding the app to your Home Screen avoids this.",
+  'settings.about.offline': 'After the first visit the app works offline, except for chip photos.',
+  'settings.about.wakeLock':
+    "Some browsers can't keep the screen on. If yours can't, lengthen the auto-lock time in your device settings.",
+  'settings.about.silent':
+    'On iPhone, the silent switch also silences alerts. Alerts always show on screen as well.',
+  'settings.about.notifications':
+    'Notifications are optional and only arrive while the browser is still running.',
+  'settings.about.clock':
+    "The clock follows your device's time. Changing the device clock during a tournament moves the timer too.",
+  'settings.about.target':
+    'The length you choose is a target, not a guarantee. Freezeouts end when someone has all the chips.',
+  'settings.about.photos':
+    'Chip photos are sent to an AI service to be counted and are never stored. Nothing else leaves your device.',
 
   'format.duration.hours': '{h}h',
   'format.duration.minutes': '{m}m',

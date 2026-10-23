@@ -66,6 +66,18 @@ describe('acquireControllerLock', () => {
     expect(a.exclusive).toBe(true);
   });
 
+  it('lets go of the lock when the page is hidden for navigation', async () => {
+    const locks = fakeLocks();
+    const page = new EventTarget();
+    const a = await acquireControllerLock('t1', locks, page);
+    const b = await acquireControllerLock('t1', locks, new EventTarget());
+    page.dispatchEvent(new Event('pagehide'));
+    await flush();
+    await flush();
+    expect(b.role).toBe('controller');
+    expect(a.role).toBe('viewer');
+  });
+
   it('hands control to a waiting viewer when the controller leaves', async () => {
     const locks = fakeLocks();
     const a = await acquireControllerLock('t1', locks);

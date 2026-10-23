@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { DEFAULT_TONE, type Tone } from '@/shared/messages';
 import { useT } from '@/shared/messages/tone';
 import { ToneProvider } from '@/shared/messages/ToneProvider';
-import { openServices, ServicesContext, type Services } from './services';
+import { openServices, ServicesContext, SetToneContext, type Services } from './services';
 
 interface Props {
   /** Tests pass in-memory services; the app opens IndexedDB. */
@@ -39,7 +39,9 @@ export function ServicesProvider({ services: given, children }: Props) {
   if (!services) return null;
   return (
     <ServicesContext.Provider value={services}>
-      <ToneProvider tone={tone}>{children}</ToneProvider>
+      <SetToneContext.Provider value={setTone}>
+        <ToneProvider tone={tone}>{children}</ToneProvider>
+      </SetToneContext.Provider>
     </ServicesContext.Provider>
   );
 }

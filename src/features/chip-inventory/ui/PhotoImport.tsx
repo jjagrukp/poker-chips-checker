@@ -54,6 +54,19 @@ export function PhotoImport({ service, onProposals, onManual }: Props) {
     };
   }, [service]);
 
+  const busy = phase.kind === 'busy';
+  const cancelButton = useRef<HTMLButtonElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const wasBusy = useRef(false);
+
+  // The control that had focus unmounts when the picker swaps with the busy state: move focus
+  // to its replacement so keyboard and screen-reader users aren't dropped on <body>.
+  useEffect(() => {
+    if (busy) cancelButton.current?.focus();
+    else if (wasBusy.current) fileInput.current?.focus();
+    wasBusy.current = busy;
+  }, [busy]);
+
   if (!enabled) return null;
 
   const analyse = async (file: File) => {
@@ -89,7 +102,6 @@ export function PhotoImport({ service, onProposals, onManual }: Props) {
     onManual();
   };
 
-  const busy = phase.kind === 'busy';
 
   return (
     <section className={`${card} flex flex-col gap-3`} aria-labelledby={`${id}-title`}>
@@ -110,7 +122,7 @@ export function PhotoImport({ service, onProposals, onManual }: Props) {
           <p role="status">
             {t(phase.step === 'preparing' ? 'photo.preparing' : 'photo.analysing')}
           </p>
-          <button type="button" className={buttonSecondary} onClick={cancel}>
+          <button type="button" ref={cancelButton} className={buttonSecondary} onClick={cancel}>
             {t('photo.cancel')}
           </button>
         </div>
@@ -124,6 +136,7 @@ export function PhotoImport({ service, onProposals, onManual }: Props) {
             {t(phase.kind === 'idle' ? 'photo.pick' : 'photo.retake')}
           </label>
           <input
+            ref={fileInput}
             id={`${id}-file`}
             type="file"
             accept="image/*"

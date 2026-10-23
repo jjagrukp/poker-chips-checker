@@ -130,6 +130,7 @@ export function LiveClock({
   const [extension, setExtension] = useState<EditResult | null>(null);
   const [extensionRefused, setExtensionRefused] = useState(false);
   const [alertSettings, setAlertSettings] = useState(false);
+  const alertsButton = useRef<HTMLButtonElement>(null);
   const alert = useAlerts({
     schedule,
     anchor,
@@ -416,6 +417,7 @@ export function LiveClock({
           <button
             type="button"
             className={buttonSecondary}
+            ref={alertsButton}
             aria-expanded={alertSettings}
             onClick={() => setAlertSettings((open) => !open)}
           >
@@ -456,7 +458,10 @@ export function LiveClock({
           notifier={platform.notifier}
           onPrefs={(patch) => void actions.updateAlertPrefs(patch)}
           onToggleMute={() => void actions.toggleMute()}
-          onClose={() => setAlertSettings(false)}
+          onClose={() => {
+            setAlertSettings(false);
+            alertsButton.current?.focus();
+          }}
         />
       )}
       {controller && editing && config && (

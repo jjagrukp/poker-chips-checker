@@ -132,8 +132,10 @@ describe('photo route', () => {
     await openChips(service);
     await screen.findByText('Start from a photo');
     pickPhoto();
-    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
-    expect(await screen.findByLabelText('Take or choose a photo')).toBeInTheDocument();
+    const cancel = await screen.findByRole('button', { name: 'Cancel' });
+    expect(cancel).toHaveFocus();
+    fireEvent.click(cancel);
+    expect(await screen.findByLabelText('Take or choose a photo')).toHaveFocus();
     expect(panel().queryByRole('alert')).not.toBeInTheDocument();
   });
 });

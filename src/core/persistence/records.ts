@@ -39,6 +39,8 @@ export const SettingsSchema = z.object({
   /** Live-clock mute toggle (M key); the rest of the alert preferences live in `alerts` (D27). */
   alertsMuted: z.boolean().optional(),
   alerts: AlertPrefsSchema.optional(),
+  /** Seeds new tournaments' break-end behaviour (Settings, spec 01 §5); additive, no version bump. */
+  breakEndDefault: z.enum(['auto', 'waitForHost']).optional(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 

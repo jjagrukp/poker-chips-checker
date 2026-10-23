@@ -25,6 +25,7 @@ export function controllerLockName(tournamentId: string): string {
 export async function acquireControllerLock(
   tournamentId: string,
   locks: Locks | undefined = globalThis.navigator?.locks,
+  page: Pick<EventTarget, 'addEventListener' | 'removeEventListener'> | undefined = globalThis.window,
 ): Promise<ControllerLock> {
   if (!locks) {
     return {
@@ -84,7 +85,12 @@ export async function acquireControllerLock(
   await firstDecision;
   decided = undefined;
 
-  return {
+  // WebKit holds a navigation until the page's locks are released; let go as the page leaves
+  // (a back/forward-cache restore reloads the page, see main.tsx).
+  const onPageHide = () => lock.release();
+  page?.addEventListener('pagehide', onPageHide);
+
+  const lock: ControllerLock = {
     get role() {
       return role;
     },
@@ -100,9 +106,11 @@ export async function acquireControllerLock(
     },
     release() {
       released = true;
+      page?.removeEventListener('pagehide', onPageHide);
       pending?.abort();
       releaseHeld?.();
       listeners.clear();
     },
   };
+  return lock;
 }

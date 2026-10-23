@@ -3,7 +3,7 @@ import type { Repositories } from '@/core/persistence/repositories';
 import { transition } from '@/core/tournaments/lifecycle';
 import type { Tournament } from '@/core/tournaments/tournament';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
-import { newWizard, toTournament, type WizardState } from './wizard';
+import { newWizard, setBreakEnd, toTournament, type WizardState } from './wizard';
 
 /** Creates and saves a fresh draft, optionally seeded (preset, duplicate, chips); returns its id. */
 export async function createDraft(
@@ -12,7 +12,10 @@ export async function createDraft(
   seed: (state: WizardState) => WizardState = (state) => state,
 ): Promise<string> {
   const now = ctx.clock.now();
-  const state = seed(newWizard({ tournamentId: ctx.newId(), inventoryId: ctx.newId() }, now));
+  const { breakEndDefault } = await repos.settings.get().catch(() => ({ breakEndDefault: undefined }));
+  const fresh = newWizard({ tournamentId: ctx.newId(), inventoryId: ctx.newId() }, now);
+  // A preset or duplicate seed carries its own behaviour and overrides the default.
+  const state = seed(breakEndDefault ? setBreakEnd(fresh, breakEndDefault) : fresh);
   const result = await repos.tournaments.commit({ tournament: toTournament(state, now) });
   if (!result.ok) throw new Error('createDraft: commit conflict');
   return state.tournament.id;

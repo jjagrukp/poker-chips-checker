@@ -135,6 +135,15 @@ describe('live clock alerts', () => {
     await waitFor(async () => expect((await repos.settings.get()).alertsMuted).toBe(true));
   });
 
+  it('moves focus into the panel and back to its button on close', async () => {
+    await open(activeFrom(), T0);
+    const toggle = screen.getByRole('button', { name: 'Sound & alerts' });
+    fireEvent.click(toggle);
+    expect(screen.getByRole('heading', { name: 'Sound & alerts' })).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(toggle).toHaveFocus();
+  });
+
   it('notifies while the tab is hidden when allowed', async () => {
     const { clock, notifier } = await open(activeFrom(), ONE_MINUTE_AT - SECOND);
     fireEvent.click(screen.getByRole('button', { name: 'Sound & alerts' }));

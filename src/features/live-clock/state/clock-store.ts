@@ -44,6 +44,8 @@ export interface ClockPlatform {
   wakeLock: ScreenWakeLock;
   audio: AlertAudio;
   notifier: AlertNotifier;
+  /** After a tournament first starts (the app asks for persistent storage then). */
+  onStarted?: () => void;
 }
 
 export interface Recovery {
@@ -258,7 +260,7 @@ export function createClockStore({
               events: [...started.events, ...running.events],
             };
           });
-          if (change) await save(change);
+          if (change && (await save(change))) platform.onStarted?.();
         }, undefined),
 
       end: () =>

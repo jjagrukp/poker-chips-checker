@@ -7,10 +7,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? 'github' : 'line',
   use: {
     baseURL: `http://localhost:${port}`,
     trace: 'on-first-retry',
+    // The offline spec opts back in; elsewhere a service worker would hide requests from page.route.
+    serviceWorkers: 'block',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

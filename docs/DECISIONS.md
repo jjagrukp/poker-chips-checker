@@ -160,6 +160,23 @@ models reject forced `tool_choice`, and `CHIP_VISION_MODEL` may name any model. 
 Q1: no Turnstile; per-IP hourly limit + global daily cap behind a `RateLimiter` interface. The in-memory one is
 per instance, so M11 swaps in a durable store (e.g. KV). A Vite plugin serves `/api/*` in dev/preview.
 
+D31 — PWA offline shell
+`vite-plugin-pwa` 1.3.0 (dev dep; generateSW/Workbox): precaches the build, SPA fallback to index.html, `/api/*` never
+cached, so AI needs the network. `registerType: 'prompt'`: a new version shows a "Reload" banner and never reloads by itself
+mid-clock. PNG icons rendered from logo.svg (192/512/maskable/apple-touch). Install button only where `beforeinstallprompt`
+exists; iOS gets the Share → Add to Home Screen hint. A DB `blocking` event closes the connection and shows a reload alert.
+
+D32 — Settings and data tools
+Settings is a feature screen (`/settings`); the app passes a `DataTools` object (export/import/quarantine export/delete all)
+built in the composition root, so the UI never sees the database. "Delete all data" clears every store but `meta` in one tx.
+`Settings.breakEndDefault` (additive, no version bump) seeds new drafts; presets/duplicates keep their own behaviour. The
+Settings "About and limitations" list is the in-app limitations text; M11 links/extends it.
+
+D33 — Security headers
+One source (`api/security-headers.ts`) for a strict CSP (`'self'` only; images also blob:/data:), nosniff, no-referrer,
+Permissions-Policy and COOP. The build emits Cloudflare Pages `_headers`; `vite preview` sends the same, so e2e runs under it.
+`_headers` doesn't cover Function responses: the M11 host adapter adds nosniff/no-referrer to `/api/*` (and HSTS).
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

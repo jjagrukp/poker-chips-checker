@@ -5,6 +5,7 @@ import type { RecordType } from '@/core/persistence/migrations';
 import { inventoryRecord } from '@/features/chip-inventory/domain/inventory';
 import { T0 } from '@/core/testing/schedules';
 import type { Tournament } from '@/core/tournaments/tournament';
+import { createDataTools } from '@/infrastructure/backup/data-tools';
 import { openDatabase } from '@/infrastructure/indexeddb/database';
 import { createRepositories } from '@/infrastructure/indexeddb/repositories';
 
@@ -63,6 +64,17 @@ export function tournament(overrides: Partial<Tournament> = {}): Tournament {
 
 /** Repositories with the real inventory record, for app and feature tests. */
 export async function openAppTestStorage(name = uniqueDbName()) {
+  return (await openAppTestDb(name)).repos;
+}
+
+/** Same, plus the database and Settings' data tools (backup, import, delete all). */
+export async function openAppTestDb(name = uniqueDbName()) {
   const db = await openDatabase(name);
-  return createRepositories(db, { inventory: inventoryRecord, clock: { now: () => T0 } });
+  const repos = createRepositories(db, { inventory: inventoryRecord, clock: { now: () => T0 } });
+  const data = createDataTools(db, repos, {
+    inventory: inventoryRecord,
+    clock: { now: () => T0 },
+    newId: sequentialIds('imported'),
+  });
+  return { db, repos, data, name };
 }

@@ -9,6 +9,7 @@ import { createDraft } from '@/features/tournament-setup/state/create';
 import { applyPreset, presetConfig } from '@/features/tournament-setup/state/reuse';
 import { loadInventory, type WizardState } from '@/features/tournament-setup/state/wizard';
 import { resumePath, setupPath, tournamentPath } from '@/features/tournament-setup/ui/paths';
+import { ConfirmAction } from '@/shared/components/ConfirmAction';
 import { buttonPrimary, buttonQuiet, buttonSecondary, card } from '@/shared/components/styles';
 import { useT, type Translate } from '@/shared/messages/tone';
 
@@ -40,6 +41,7 @@ export function Library({ repos, ctx, newTournament }: Props) {
     'loadFailed' | 'createFailed' | 'deleteFailed' | 'presetUnusable'
   >();
   const [busy, setBusy] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     const [tournaments, presets, inventories] = await Promise.all([
@@ -74,6 +76,13 @@ export function Library({ repos, ctx, newTournament }: Props) {
     } catch {
       setProblem('deleteFailed');
     }
+    // The row (and its buttons) is gone: keep focus inside the library, not on <body>.
+    root.current?.focus();
+  };
+
+  const cancelDelete = (key: string) => {
+    setConfirming(null);
+    root.current?.querySelector<HTMLElement>(`[data-delete="${CSS.escape(key)}"]`)?.focus();
   };
 
   const startFrom = async (seed: (s: WizardState) => WizardState) => {
@@ -99,10 +108,12 @@ export function Library({ repos, ctx, newTournament }: Props) {
 
   const confirmRow = (key: string, name: string, onDelete: () => void) =>
     confirming === key ? (
-      <ConfirmDelete
+      <ConfirmAction
         text={t('home.delete.confirm', { name })}
+        confirmLabel={t('home.delete')}
+        cancelLabel={t('clock.confirm.cancel')}
         onConfirm={onDelete}
-        onCancel={() => setConfirming(null)}
+        onCancel={() => cancelDelete(key)}
       />
     ) : null;
 
@@ -110,6 +121,7 @@ export function Library({ repos, ctx, newTournament }: Props) {
     <button
       type="button"
       className={buttonQuiet}
+      data-delete={key}
       aria-label={t('home.itemAction', { action: t('home.delete'), name })}
       onClick={() => setConfirming(key)}
     >
@@ -118,7 +130,13 @@ export function Library({ repos, ctx, newTournament }: Props) {
   );
 
   return (
-    <div className="flex w-full flex-col gap-6 text-left">
+    <div
+      ref={root}
+      tabIndex={-1}
+      role="group"
+      aria-label={t('home.saved')}
+      className="flex w-full flex-col gap-6 text-left outline-none"
+    >
       {problem && <p role="alert">{t(`home.problem.${problem}`)}</p>}
 
       {active.map((x) => (
@@ -258,39 +276,5 @@ function Item({
       </div>
       {confirm}
     </li>
-  );
-}
-
-function ConfirmDelete({
-  text,
-  onConfirm,
-  onCancel,
-}: {
-  text: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const t = useT();
-  const id = useId();
-  const cancel = useRef<HTMLButtonElement>(null);
-  // Focus starts on Cancel so a stray Enter never deletes anything.
-  useEffect(() => cancel.current?.focus(), []);
-  return (
-    <div role="alertdialog" aria-modal="false" aria-labelledby={id} className="flex flex-col gap-2">
-      <p id={id}>{text}</p>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className={buttonPrimary} onClick={onConfirm}>
-          {t('home.delete')}
-        </button>
-        <button
-          type="button"
-          className={buttonSecondary + ' bg-surface'}
-          ref={cancel}
-          onClick={onCancel}
-        >
-          {t('clock.confirm.cancel')}
-        </button>
-      </div>
-    </div>
   );
 }

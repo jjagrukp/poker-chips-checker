@@ -1,26 +1,7 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { addChip, heading, next, noAxeViolations } from './helpers';
 
 // M5 exit: the wizard reaches `ready`; back-navigation and reload keep every answer.
-
-async function noAxeViolations(page: Page) {
-  const { violations } = await new AxeBuilder({ page }).analyze();
-  expect(violations).toEqual([]);
-}
-
-async function addChip(page: Page, index: number, colour: string, quantity: string, value: string) {
-  await page.getByRole('button', { name: 'Add chip type' }).click();
-  await page
-    .getByRole('listitem', { name: `Chip type: Chip type ${index}` })
-    .getByLabel('Colour')
-    .fill(colour);
-  const row = page.getByRole('listitem', { name: `Chip type: ${colour}` });
-  await row.getByLabel('How many').fill(quantity);
-  await row.getByLabel('Value in this tournament').fill(value);
-}
-
-const next = (page: Page) => page.getByRole('button', { name: 'Next' }).click();
-const heading = (page: Page, name: string) => page.getByRole('heading', { level: 1, name });
 
 test('sets up a tournament from scratch to ready', async ({ page }) => {
   await page.goto('/');
