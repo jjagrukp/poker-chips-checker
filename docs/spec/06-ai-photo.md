@@ -11,7 +11,7 @@ or schedules. The app is fully usable with AI disabled or failing.
 3. Validate type (JPEG/PNG/WebP/HEIC where decodable) and size (≤ 20 MB raw).
 4. Downscale in a canvas to ≤ 1600 px long edge, re-encode JPEG q≈0.85 (this also strips
    EXIF/GPS). Reject if still > 1.5 MB.
-5. POST to `/api/analyse-chips` with a 30 s client timeout and a cancel button.
+5. POST to `/api/analyse-chips` with a 55 s client timeout (D39) and a cancel button.
 6. Validate response with the shared Zod schema; map to unconfirmed `ChipType` rows on the
    inventory review screen (05 §2). Counts prefilled only if `countConfidence` is high or
    medium, and always flagged "check this".
@@ -21,7 +21,7 @@ or schedules. The app is fully usable with AI disabled or failing.
 ## 2. Endpoint `api/analyse-chips.ts`
 Standard Web Fetch handler. Steps: method + content-type check → size ≤ 2 MB → magic-byte
 check → rate limit → call the vision provider chosen by `AI_PROVIDER` (`gemini` or `anthropic`, D34;
-model from `CHIP_VISION_MODEL`, timeout 25 s, one retry on 5xx/overload) with structured output
+model from `CHIP_VISION_MODEL`, timeout 45 s, one retry on 5xx/overload) with structured output
 whose schema is the response schema → Zod-validate → return. Never log request bodies or
 model output beyond status/latency. No storage.
 

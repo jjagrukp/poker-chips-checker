@@ -118,7 +118,7 @@ test('a photo becomes unconfirmed rows; the upload is downscaled with EXIF remov
 
   const white = page.getByRole('listitem', { name: 'Chip type: White' });
   await expect(white.getByLabel('How many')).toHaveValue('100');
-  await expect(white.getByText(/Count these to check/)).toBeVisible();
+  await expect(white.getByText(/count these again/)).toBeVisible();
   const red = page.getByRole('listitem', { name: 'Chip type: Red' });
   await expect(red.getByLabel('How many')).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Confirm inventory' })).toBeDisabled();

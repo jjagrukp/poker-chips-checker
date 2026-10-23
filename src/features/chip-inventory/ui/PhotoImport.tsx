@@ -108,6 +108,7 @@ export function PhotoImport({ service, onProposals, onManual }: Props) {
       <h2 id={`${id}-title`} className="font-semibold">
         {t('photo.title')}
       </h2>
+      <p className="font-semibold">{t('photo.scope')}</p>
       <p>{t('photo.privacy')}</p>
       <details className={hint}>
         <summary className="min-h-11 cursor-pointer py-2 font-semibold">
@@ -119,6 +120,12 @@ export function PhotoImport({ service, onProposals, onManual }: Props) {
 
       {busy ? (
         <div className="flex flex-wrap items-center gap-3">
+          {/* Decorative: the status text below says what's happening. */}
+          <span
+            data-testid="photo-spinner"
+            aria-hidden="true"
+            className="size-6 shrink-0 animate-spin rounded-full border-4 border-ink-muted/30 border-t-accent"
+          />
           <p role="status">
             {t(phase.step === 'preparing' ? 'photo.preparing' : 'photo.analysing')}
           </p>

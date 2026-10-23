@@ -205,6 +205,23 @@ D38 — Photo input without `capture` (refines spec 06 §1.2)
 `capture="environment"` made iOS open the camera only, so saved photos couldn't be chosen. Plain
 `accept="image/*"` gives the OS menu (library, camera, files) on iOS and Android.
 
+D39 — Photo timeouts 45 s server / 55 s client (supersedes the 25 s / 30 s in spec 06 and D36)
+With D37's edge counting, Gemini Flash hit the 25 s budget again (504 at 25 025 ms). Server budget is now
+45 s (retry still inside it); client waits 55 s so the server's JSON timeout reply wins. Pages Functions
+have no wall-clock limit while awaiting the model. Cost: a slow failure is billed for longer.
+
+D40 — One row per chip type from a photo (refines spec 06 §1.6)
+Models listed each stack as its own type ("Second blue stack"). The prompt now asks for one entry per
+type with the total count, and the client also combines proposals with the same colour, extra colours,
+pattern and printed value: counts summed (null if any is null), lowest confidence kept, notes joined.
+Different patterns or values stay separate, so lookalike types aren't merged.
+
+D41 — Whole-set photos (refines spec 06 §1, §3)
+Real photos are often a full case: one type in several rows/slots plus loose sample chips, next to a
+dealer button, cards and dice. The prompt totals a type across all places, carries a printed value from
+any chip to its type, and ignores buttons/markers/cards/dice. The photo panel says so up top, and shows a
+decorative spinner (aria-hidden; the status text stays the announcement) while preparing and analysing.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

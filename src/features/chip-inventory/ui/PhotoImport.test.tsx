@@ -80,7 +80,7 @@ describe('photo route', () => {
     expect(analyse).toHaveBeenCalledTimes(1);
     const red = screen.getByRole('listitem', { name: 'Chip type: Red' });
     expect(within(red).getByLabelText('How many')).toHaveValue('50');
-    expect(within(red).getByText(/Count these to check/)).toBeInTheDocument();
+    expect(within(red).getByText(/count these again/)).toBeInTheDocument();
     // Low confidence: no count prefilled; the printed value carries over.
     const green = screen.getByRole('listitem', { name: 'Chip type: Green' });
     expect(within(green).getByLabelText('How many')).toHaveValue('');
@@ -88,7 +88,7 @@ describe('photo route', () => {
 
     expect(screen.getByRole('button', { name: 'Confirm inventory' })).toBeDisabled();
     fireEvent.click(within(red).getByRole('button', { name: 'Red looks right' }));
-    expect(within(red).queryByText(/Count these to check/)).not.toBeInTheDocument();
+    expect(within(red).queryByText(/count these again/)).not.toBeInTheDocument();
   });
 
   it('says when the photo is not chips and offers manual entry', async () => {
@@ -131,11 +131,15 @@ describe('photo route', () => {
     );
     await openChips(service);
     await screen.findByText('Start from a photo');
+    expect(panel().getByText(/dealer buttons, cards and dice/)).toBeInTheDocument();
+    expect(panel().queryByTestId('photo-spinner')).not.toBeInTheDocument();
     pickPhoto();
     const cancel = await screen.findByRole('button', { name: 'Cancel' });
     expect(cancel).toHaveFocus();
+    expect(panel().getByTestId('photo-spinner')).toHaveAttribute('aria-hidden', 'true');
     fireEvent.click(cancel);
     expect(await screen.findByLabelText('Take or choose a photo')).toHaveFocus();
+    expect(panel().queryByTestId('photo-spinner')).not.toBeInTheDocument();
     expect(panel().queryByRole('alert')).not.toBeInTheDocument();
   });
 });

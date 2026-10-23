@@ -82,11 +82,56 @@ function isBlank(row: ChipRow): boolean {
   return !row.colour.trim() && !row.quantityText.trim() && !row.valueText.trim();
 }
 
+const CONFIDENCE_RANK = { low: 0, medium: 1, high: 2 } as const;
+
+function typeKey(p: ChipProposal): string {
+  const norm = (s: string) => s.trim().toLowerCase();
+  return JSON.stringify([
+    norm(p.primaryColour),
+    p.secondaryColours.map(norm).sort(),
+    norm(p.pattern ?? ''),
+    p.printedValue,
+  ]);
+}
+
+/**
+ * The model sometimes reports each stack of one chip type separately (D40). Identical types
+ * become one proposal: counts add up (unknown if any stack's is), confidence is the lowest.
+ */
+export function combineDuplicates(proposals: readonly ChipProposal[]): ChipProposal[] {
+  const byKey = new Map<string, ChipProposal>();
+  for (const p of proposals) {
+    const key = typeKey(p);
+    const seen = byKey.get(key);
+    if (!seen) {
+      byKey.set(key, p);
+      continue;
+    }
+    const notes = [seen.notes, p.notes].filter(Boolean).join('; ').slice(0, 200);
+    byKey.set(key, {
+      ...seen,
+      estimatedCount:
+        seen.estimatedCount === null || p.estimatedCount === null
+          ? null
+          : seen.estimatedCount + p.estimatedCount,
+      countConfidence:
+        CONFIDENCE_RANK[p.countConfidence] < CONFIDENCE_RANK[seen.countConfidence]
+          ? p.countConfidence
+          : seen.countConfidence,
+      notes: notes || null,
+    });
+  }
+  return [...byKey.values()];
+}
+
 /** Appends proposals to the current rows, dropping untouched blank rows. */
 export function mergeProposals(
   rows: readonly ChipRow[],
   proposals: readonly ChipProposal[],
   newId: () => string,
 ): ChipRow[] {
-  return [...rows.filter((r) => !isBlank(r)), ...proposals.map((p) => proposalToRow(p, newId()))];
+  return [
+    ...rows.filter((r) => !isBlank(r)),
+    ...combineDuplicates(proposals).map((p) => proposalToRow(p, newId())),
+  ];
 }

@@ -6,10 +6,11 @@ import {
 } from '@/features/chip-inventory/photo/schema';
 import type { AnalyseResult, PhotoService } from '@/features/chip-inventory/photo/service';
 
-// Browser PhotoService (spec 06 §1): canvas codec, 30 s client timeout, and Zod on every
+// Browser PhotoService (spec 06 §1): canvas codec, 55 s client timeout, and Zod on every
 // response, because AI output is untrusted on this side too.
 
-export const CLIENT_TIMEOUT_MS = 30_000;
+// Above the server's 45 s budget so its timeout reply arrives first (D39).
+export const CLIENT_TIMEOUT_MS = 55_000;
 
 interface Deps {
   fetch: typeof fetch;

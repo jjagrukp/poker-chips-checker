@@ -11,7 +11,7 @@ import { providerFor, type ModelImage, type ProviderEnv, type VisionProvider } f
 
 // POST /api/analyse-chips (spec 06 §2): a standard Web Fetch handler, so it runs on any host.
 // Steps: enabled → method/origin/content-type → size → magic bytes → rate limit → model call
-// (provider from AI_PROVIDER, D34; one retry on 5xx/overload, 25 s overall) → Zod → response. No storage, and
+// (provider from AI_PROVIDER, D34; one retry on 5xx/overload, 45 s overall) → Zod → response. No storage, and
 // nothing about the image or model output is logged: only status, latency and error code.
 
 export interface PhotoEnv extends ProviderEnv {
@@ -36,7 +36,8 @@ export interface AnalyseDeps {
   timeoutMs?: number;
 }
 
-const TIMEOUT_MS = 25_000;
+// Counting chip edges (D37) takes the model longer than naming colours (D39).
+const TIMEOUT_MS = 45_000;
 
 export function aiPhotoEnabled(env: PhotoEnv): boolean {
   const provider = providerFor(env);

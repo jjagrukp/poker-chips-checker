@@ -29,7 +29,9 @@ export interface VisionProvider {
 
 const TOOL_NAME = 'report_chips';
 
-const RULES = `- List each distinct physical chip type: primary colour, secondary colours (edge spots, inlays), edge pattern, and the printed value if clearly legible (otherwise null).
+const RULES = `- One entry per distinct chip type, never per stack: the same type is often split across several stacks, rows or case slots, plus loose chips. Report it once, with the total count across all of them. A value printed on any chip of that type (e.g. a loose chip) applies to the whole type.
+- Only poker chips count. Ignore dealer buttons, blind buttons and other markers, cards, dice and the case itself, even when they are round or chip-like.
+- List each distinct physical chip type: primary colour, secondary colours (edge spots, inlays), edge pattern, and the printed value if clearly legible (otherwise null).
 - Use plain colour names a person would say, such as "white", "red", "dark blue".
 - Count the chips of each type when every chip can be seen: chips laid flat without overlap (count each chip), or stacks seen from the side (count the edges in each stack, then add the stacks). If chips are hidden (stacks seen from above, piles, overlaps), estimatedCount is null.
 - countConfidence: "high" only when every chip was counted individually and clearly; "medium" when edges were counted but a few may be miscounted; otherwise "low".
@@ -125,7 +127,7 @@ ${RULES}`,
         generationConfig: {
           responseMimeType: 'application/json',
           responseJsonSchema: REPORT_TOOL_INPUT_SCHEMA,
-          // Default thinking ran past the 25 s budget on real photos (D36).
+          // Default thinking ran past the server budget on real photos (D36).
           thinkingConfig: { thinkingLevel: 'low' },
         },
       }),

@@ -294,10 +294,12 @@ export const messages = {
     'Suggested values give the most numerous chips the lowest value. Check them before you confirm.',
   'inventory.confirm': 'Confirm inventory',
   'inventory.confirmed': 'Inventory confirmed and saved.',
-  'inventory.row.checkCount': 'Estimated from your photo. Count these to check.',
+  'inventory.row.checkCount': 'Very rough count from your photo. AI makes mistakes, so count these again.',
   'inventory.row.aiNote': 'From the photo: {note}',
 
   'photo.title': 'Start from a photo',
+  'photo.scope':
+    "Get all your chips in one photo, case and all. Stacks or rows of the same chip are added together, and dealer buttons, cards and dice aren't counted.",
   'photo.privacy': "Your photo is sent to an AI service to identify chip colours. It isn't stored.",
   'photo.privacyMore': 'What happens to my photo?',
   'photo.privacyDetail':
