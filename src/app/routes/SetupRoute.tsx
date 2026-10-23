@@ -37,6 +37,7 @@ export function TournamentRoute() {
       repos={repos}
       ctx={ctx}
       platform={platform}
+      music={screenShare !== undefined}
       controllerExtras={
         screenShare
           ? (tournament, schedule) => (

@@ -1,14 +1,16 @@
 # Progress
 
 ## Current state
-Active milestone: none (M15 done; nothing further on the roadmap)
-Status: M15 committed. Host still to apply migration 0002 and redeploy for screen share (M12); a TV on an
+Active milestone: none (M16 done; nothing further on the roadmap)
+Status: M16 committed; redeploy for the new CSP (YouTube script + nocookie frame). Host still to apply migration 0002 and redeploy for screen share (M12); a TV on an
 old cached build must reload to honour level holds.
-Last completed: M15
+Last completed: M16
 Open issues / follow-ups:
 - Screen share (D42): the TV uses default alert prefs and ignores the host's mute (mute lives in Settings,
   not the snapshot); GET `/api/screens/:code` has no rate limit (~43k D1 reads/day per TV, inside the free
   tier); host must apply migration 0002 before deploying.
+- TV music (D46): ducks only on alerts shown on the TV (countdown at its first beat); "can't reach
+  YouTube" doesn't retry until the link changes; Music dock button has no aria-controls/focus move.
 - Cross-layer imports must use the `@/` alias (see D10); boundary rules also ban dynamic import().
 - Save every step via `repos.tournaments.commit({tournament, schedules?, events?, expectedClockRevision?})` (D16).
 - AI photo: provider switchable (D34); compare Claude vs Gemini and real-model quality on test night.
@@ -42,3 +44,4 @@ M12 — 2026-10-23 — "M12: screen share" — phone as remote, TV as display: s
 M13 — 2026-10-23 — "M13: visual design" — "Midnight card room" restyle: self-hosted Bricolage/Manrope/Barlow Condensed, new tokens + felt glow, Icon + Chip components, clock/TV hero + control dock + stat tiles, Home live card + chip-set fans, ready screen, wizard stepper + sticky nav, chip rows with live chip preview (swatch follows colour name), phone-fit schedule table, option cards, new brass icons; mute saved before shown (serialised)
 M14 — 2026-10-23 — "M14: hand rankings" — toggleable Hold'em hand-rankings panel beside big-screen clocks (fullscreen ≥ 1024 px and shared TV), stored per tournament (settings.showReference, D44) so it reaches the TV via the snapshot; TV hero sized by container with a height floor
 M15 — 2026-10-23 — "M15: host-started levels" — levels wait for the host when time runs out (setting, default on; deriveOptions helper; holds in catch-up + alert planning), hero "Time's up" + big Start Level N, TV alert toasts, sound pill, corner wake-lock note
+M16 — 2026-10-23 — "M16: TV music" — host pastes a YouTube song/playlist link; shared TV plays it in a visible 200 px nocookie player (play/pause, next, shuffle, volume, loop, ducking under alerts, autoplay fallback); CSP allows YouTube

@@ -26,9 +26,18 @@ interface Props {
   platform: ClockPlatform;
   /** Extra controller-only panel under the controls (the app adds "Show on a TV"). */
   controllerExtras?: ((tournament: Tournament, schedule: Schedule) => ReactNode) | undefined;
+  /** Offer "Music" for a shared TV (spec 12); the app turns it on with screen share. */
+  music?: boolean;
 }
 
-export function ClockScreen({ tournamentId, repos, ctx, platform, controllerExtras }: Props) {
+export function ClockScreen({
+  tournamentId,
+  repos,
+  ctx,
+  platform,
+  controllerExtras,
+  music = false,
+}: Props) {
   const t = useT();
   const [store] = useState(() => createClockStore({ tournamentId, repos, ctx, platform }));
   useEffect(() => store.getState().init(), [store]);
@@ -78,6 +87,7 @@ export function ClockScreen({ tournamentId, repos, ctx, platform, controllerExtr
           platform={platform}
           audio={audio}
           extras={controllerExtras?.(tournament, schedule)}
+          music={music}
         />
       );
     case 'completed':

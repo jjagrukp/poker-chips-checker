@@ -250,6 +250,13 @@ to wait (Hold'em config `levelEndBehaviour`, app default `Settings.levelEndDefau
 on a cached pre-M15 build drops the unknown field and runs levels automatically; it must reload
 (the PWA prompts for updates).
 
+D46 — TV music through YouTube's embedded player (spec 12)
+The host stores `TournamentSettings.music` (ids, playing, volume, shuffle, skip counter; additive,
+no version bump) so it reaches the TV through the existing snapshot, as D44 does. No new npm
+dependency: the TV loads YouTube's IFrame API script at runtime, so the CSP allows script-src
+www.youtube.com and frame-src www.youtube-nocookie.com. Our own iframe sets
+referrerpolicy=strict-origin-when-cross-origin (embeds need a referrer; the page stays no-referrer).
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

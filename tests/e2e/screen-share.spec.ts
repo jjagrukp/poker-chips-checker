@@ -40,6 +40,20 @@ test('a TV follows the phone through a shared code', async ({ page, browser }) =
   await rankings.click();
   await expect(tv.getByText('Royal flush')).toHaveCount(0);
 
+  // Spec 12: the phone sends a YouTube link and the TV embeds it. YouTube itself is blocked
+  // here (tests stay offline), so the TV also shows that it can't reach it.
+  await tvContext.route(/youtube/, (route) => route.abort());
+  await page.getByRole('button', { name: 'Music', exact: true }).click();
+  await page.getByLabel('YouTube link').fill('https://youtu.be/dQw4w9WgXcQ');
+  await page.getByRole('button', { name: 'Play on TV' }).click();
+  await expect(page.getByText('Song playing on the TV.')).toBeVisible();
+  await noAxeViolations(page);
+  const player = tv.getByTitle('YouTube music player');
+  await expect(player).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?/);
+  await expect(tv.getByText("Can't reach YouTube right now.")).toBeVisible();
+  await page.getByRole('button', { name: 'Stop music' }).click();
+  await expect(player).toHaveCount(0);
+
   await page.getByRole('button', { name: 'Pause' }).click();
   await expect(tv.getByText('Paused', { exact: true })).toBeVisible();
   await expect(tv.getByRole('timer', { name: 'Time left' })).toHaveText(

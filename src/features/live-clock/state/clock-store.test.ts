@@ -161,6 +161,23 @@ describe('clock store', () => {
     expect((await repos.tournaments.get('t1'))?.settings.showReference).toBe(false);
   });
 
+  it('sets and clears the TV music', async () => {
+    const { s, repos, platform } = await setup(activeFrom());
+    const onSaved = vi.fn();
+    platform.onSaved = onSaved;
+    const music = { videoId: 'dQw4w9WgXcQ', playing: true, volume: 60, shuffle: false, skips: 0 };
+    await s().setMusic(music);
+    expect((await repos.tournaments.get('t1'))?.settings.music).toEqual(music);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    // No change, no write.
+    await s().setMusic({ ...music });
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    await s().setMusic(undefined);
+    const settings = (await repos.tournaments.get('t1'))?.settings;
+    expect(settings).toBeDefined();
+    expect(settings && 'music' in settings).toBe(false);
+  });
+
   it('re-reads when the controller tab saves', async () => {
     const { s, repos, platform } = await setup(activeFrom(), { role: 'viewer' });
     const other = applyClockCommand(activeFrom(), holdemSchedule(), T0 + MINUTE, pause);

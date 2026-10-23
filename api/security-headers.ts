@@ -4,7 +4,9 @@
 export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self'",
+    // YouTube's IFrame API and its privacy-enhanced player, for the shared TV's music (D46).
+    "script-src 'self' https://www.youtube.com",
+    'frame-src https://www.youtube-nocookie.com',
     "style-src 'self'",
     "img-src 'self' blob: data:",
     "connect-src 'self'",

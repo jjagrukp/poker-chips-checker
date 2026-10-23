@@ -21,6 +21,7 @@ Persistence moved earlier than the original plan because timer recovery depends 
 | M13 | Visual design | 09 | "Midnight card room" restyle: fonts, tokens, Icon + Chip components, clock/TV, home/library/ready/results, wizard (stepper, sticky nav, phone schedule cards), settings/share/photo; tests green, no 375 px overflow. |
 | M14 | Hand rankings | 10 | Toggleable Hold'em hand-rankings panel beside the clock on big screens (fullscreen and shared TV), stored per tournament, pushed to the TV, tests + e2e. |
 | M15 | Host-started levels | 11 | Level end waits for the host (setting, default on) with a big "Start Level N" control and TV notice; TV/fullscreen alerts as toasts, sound prompt as a pill; tests + e2e. |
+| M16 | TV music | 12 | Host pastes a YouTube song/playlist link; the shared TV plays it in a small visible player under the clock (play/pause, next, shuffle, volume, ducking under alerts, autoplay fallback); tests. |
 
 Recommended model per milestone (main session): Opus for M1, M3, M4, M6 (design-heavy,
 use plan mode first); Sonnet for everything else.

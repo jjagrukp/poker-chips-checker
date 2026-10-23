@@ -212,6 +212,7 @@ const NO_ACTIONS = {
   end: done,
   changePlayers: done,
   setReference: done,
+  setMusic: done,
   applyEdit: async () => 'failed' as const,
   recover: done,
   skewed: done,

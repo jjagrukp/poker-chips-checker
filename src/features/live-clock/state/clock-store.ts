@@ -22,7 +22,7 @@ import {
   InvalidTransition,
   transition,
 } from '@/core/tournaments/lifecycle';
-import { deriveOptions, type Tournament } from '@/core/tournaments/tournament';
+import { deriveOptions, type MusicSettings, type Tournament } from '@/core/tournaments/tournament';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
 import type { AlertAudio } from '@/infrastructure/audio/alert-audio';
 import type { AlertNotifier } from '@/infrastructure/notifications/notifier';
@@ -78,6 +78,8 @@ export interface ClockStore {
   changePlayers(delta: number): Promise<void>;
   /** Shows or hides the reference panel (hand rankings) on big screens (D44). */
   setReference(show: boolean): Promise<void>;
+  /** Sets or clears the shared TV's music (spec 12, D46). */
+  setMusic(music: MusicSettings | undefined): Promise<void>;
   applyEdit(edited: Schedule, options: EditOptions): Promise<EditOutcome>;
   /** Cold load and visibility regain share this path (spec 03 §4). */
   recover(): Promise<void>;
@@ -299,6 +301,20 @@ export function createClockStore({
           const tournament: Tournament = {
             ...current.tournament,
             settings: { ...current.tournament.settings, showReference: show },
+            updatedAt: ctx.clock.now(),
+          };
+          await save({ tournament, events: [] });
+        }, undefined),
+
+      setMusic: (music) =>
+        enqueue(async () => {
+          const current = writable('active');
+          if (!current) return;
+          const { music: before, ...rest } = current.tournament.settings;
+          if (JSON.stringify(before) === JSON.stringify(music)) return;
+          const tournament: Tournament = {
+            ...current.tournament,
+            settings: music ? { ...rest, music } : rest,
             updatedAt: ctx.clock.now(),
           };
           await save({ tournament, events: [] });

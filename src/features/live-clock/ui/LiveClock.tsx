@@ -25,6 +25,8 @@ import type { HoldemConfig } from '@/modules/texas-holdem/config';
 import { extend, type EditResult } from '@/modules/texas-holdem/edits';
 import { formatBlinds, formatChips, formatDurationMin } from '@/modules/texas-holdem/format';
 import { levelData } from '@/modules/texas-holdem/generate';
+import { MusicPanel } from '@/features/music/ui/MusicPanel';
+import { MusicPlayer } from '@/features/music/ui/MusicPlayer';
 import { Icon } from '@/shared/components/Icon';
 import {
   buttonPrimary,
@@ -107,6 +109,8 @@ interface Props {
   audio: { state: AudioState; unlock: () => void };
   /** Controller-only panel under the controls. */
   extras?: ReactNode;
+  /** The host can send music to a shared TV (spec 12): only where screen share is on. */
+  music?: boolean;
   /**
    * Shared-screen display (spec 08): read-only, big layout, no home link or viewer banner, but
    * it keeps the screen awake and sounds the alerts, since the TV is the room's speaker.
@@ -127,6 +131,7 @@ export function LiveClock({
   platform,
   audio,
   extras,
+  music = false,
   screen = false,
   notice,
 }: Props) {
@@ -176,6 +181,8 @@ export function LiveClock({
   const [extension, setExtension] = useState<EditResult | null>(null);
   const [extensionRefused, setExtensionRefused] = useState(false);
   const [alertSettings, setAlertSettings] = useState(false);
+  const [musicPanel, setMusicPanel] = useState(false);
+  const musicButton = useRef<HTMLButtonElement>(null);
   const alertsButton = useRef<HTMLButtonElement>(null);
   const alert = useAlerts({
     schedule,
@@ -656,6 +663,18 @@ export function LiveClock({
               <Icon name="cards" className="size-4" />
               {t('clock.control.reference')}
             </button>
+            {music && (
+              <button
+                type="button"
+                className={buttonSecondary}
+                ref={musicButton}
+                aria-expanded={musicPanel}
+                onClick={() => setMusicPanel((open) => !open)}
+              >
+                <Icon name="music" className="size-4" />
+                {t('clock.control.music')}
+              </button>
+            )}
             <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
               <Icon name={fullscreen.active ? 'shrink' : 'expand'} className="size-4" />
               {t(fullscreen.active ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
@@ -729,6 +748,16 @@ export function LiveClock({
           }}
         />
       )}
+      {controller && music && musicPanel && (
+        <MusicPanel
+          music={tournament.settings.music}
+          onChange={(next) => void actions.setMusic(next)}
+          onClose={() => {
+            setMusicPanel(false);
+            musicButton.current?.focus();
+          }}
+        />
+      )}
       {controller && editing && config && (
         <RunningEditor
           // A schedule swapped underneath (e.g. levels added) invalidates any draft.
@@ -741,6 +770,9 @@ export function LiveClock({
           onApply={actions.applyEdit}
           onClose={() => setEditing(false)}
         />
+      )}
+      {screen && tournament.settings.music && (
+        <MusicPlayer music={tournament.settings.music} alertKey={alert?.key} />
       )}
       {withReference && (
         <HandRankings className="fixed inset-y-[3vh] right-[2vw] hidden w-[30%] text-[min(2.2vh,1.1vw)] lg:flex" />

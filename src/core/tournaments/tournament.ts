@@ -13,7 +13,21 @@ export const TournamentSettingsSchema = z.object({
   levelEndBehaviour: z.enum(['auto', 'waitForHost']).optional(),
   /** Show the module's reference panel (Hold'em: hand rankings) beside a big-screen clock (D44). */
   showReference: z.boolean().optional(),
+  /** Background music on the shared TV (spec 12, D46). Absent means none. */
+  music: z
+    .object({
+      videoId: z.string().regex(/^[\w-]{11}$/).optional(),
+      listId: z.string().regex(/^[\w-]{2,64}$/).optional(),
+      playing: z.boolean(),
+      volume: z.number().int().min(0).max(100),
+      shuffle: z.boolean(),
+      /** Bumped by each "Next"; a screen skips when it sees it go up. */
+      skips: count,
+    })
+    .refine((m) => m.videoId !== undefined || m.listId !== undefined, 'Needs a video or playlist')
+    .optional(),
 });
+export type MusicSettings = NonNullable<TournamentSettings['music']>;
 export type TournamentSettings = z.infer<typeof TournamentSettingsSchema>;
 
 /** Finishing positions (optional names; place 1 is the winner) and the host-editable duration. */
