@@ -222,6 +222,13 @@ dealer button, cards and dice. The prompt totals a type across all places, carri
 any chip to its type, and ignores buttons/markers/cards/dice. The photo panel says so up top, and shows a
 decorative spinner (aria-hidden; the status text stays the announcement) while preparing and analysing.
 
+D42 — Screen share relay (spec 08; host-approved exception to "no cloud DB")
+Phone and TV are different devices, so they need a server in the middle (WebRTC still needs signalling
+and fails behind many NATs). Opt-in only: the phone pushes its latest snapshot to `/api/screens/:code`
+(D1 `screens`, 24 h expiry, write key stored hashed); the TV polls every 2 s and derives the clock itself,
+so a sleeping phone doesn't stop it. Phone stays source of truth. 8-char code (~40 bits) typed on a TV
+remote; no QR (would be a new dependency, and TVs can't scan). Share keys live in localStorage.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

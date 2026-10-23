@@ -28,7 +28,9 @@ used for the clock and for each viewer. Tick each box, and write down anything t
 - [ ] **Refresh**: reload the clock tab mid-level. The clock carried on from the right time.
 - [ ] **Mid-game edit**: change an upcoming level (e.g. lengthen it). Past levels stayed locked and
       the change showed straight away.
-- [ ] A second device opened the tournament as a viewer and stayed in sync.
+- [ ] A second tab on the host's device opened the tournament as a viewer and stayed in sync.
+- [ ] "Show on a TV": the TV opened `/screen/<code>`, stayed in sync through pause, next level and a
+      break, and kept counting with the phone screen off.
 - [ ] Players-remaining and average stack updated as people busted.
 - [ ] Ran offline for a while (flight mode on the clock device): clock and alerts carried on.
 

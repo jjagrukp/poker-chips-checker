@@ -1,6 +1,7 @@
 import { handleAnalyseChips, rateLimitsFrom, type PhotoEnv } from './analyse-chips';
 import { handleConfig } from './config';
 import { createCounterRateLimiter, type CounterStore } from './rate-limit';
+import { handleScreen, SCREEN_TTL_MS, SCREEN_WRITE_LIMITS, type ScreenStore } from './screens';
 import { API_HEADERS } from './security-headers';
 
 // Cloudflare Pages Functions host adapter (D35). `functions/api/*` re-export these. Only the
@@ -24,6 +25,8 @@ export interface CloudflareEnv extends PhotoEnv {
 export interface PagesContext {
   request: Request;
   env: CloudflareEnv;
+  /** Route params, e.g. `code` for `functions/api/screens/[code].ts`. */
+  params?: Record<string, string | string[]>;
   next(): Promise<Response>;
 }
 
@@ -44,6 +47,68 @@ export function d1CounterStore(db: D1Database): CounterStore {
       await db.prepare('DELETE FROM rate_counts WHERE expires_at <= ?1').bind(now).run();
     },
   };
+}
+
+/** Screen-share snapshots (D42, `migrations/0002_screens.sql`). Expired rows go on each write. */
+export function d1ScreenStore(db: D1Database): ScreenStore {
+  return {
+    async get(code, now) {
+      const row = await db
+        .prepare('SELECT body, received_at FROM screens WHERE code = ?1 AND expires_at > ?2')
+        .bind(code, now)
+        .first<{ body: string; received_at: number }>();
+      return row ? { body: row.body, receivedAt: row.received_at } : null;
+    },
+    async put(code, keyHash, body, now) {
+      // One statement: claims a free or expired code, or updates our own; another key's row
+      // fails the WHERE, so nothing is returned.
+      const row = await db
+        .prepare(
+          'INSERT INTO screens (code, key_hash, body, received_at, expires_at) VALUES (?1, ?2, ?3, ?4, ?5) ' +
+            'ON CONFLICT (code) DO UPDATE SET key_hash = excluded.key_hash, body = excluded.body, ' +
+            'received_at = excluded.received_at, expires_at = excluded.expires_at ' +
+            'WHERE screens.key_hash = excluded.key_hash OR screens.expires_at <= ?4 RETURNING code',
+        )
+        .bind(code, keyHash, body, now, now + SCREEN_TTL_MS)
+        .first<{ code: string }>();
+      await db.prepare('DELETE FROM screens WHERE expires_at <= ?1').bind(now).run();
+      return row !== null;
+    },
+    async delete(code, keyHash) {
+      await db
+        .prepare('DELETE FROM screens WHERE code = ?1 AND key_hash = ?2')
+        .bind(code, keyHash)
+        .run();
+    },
+  };
+}
+
+/** Write counters share `rate_counts`, under their own prefix. */
+function prefixed(store: CounterStore, prefix: string): CounterStore {
+  return {
+    increment: (key, expiresAt) => store.increment(`${prefix}${key}`, expiresAt),
+    prune: (now) => store.prune(now),
+  };
+}
+
+export function screensOnCloudflare({ request, env, params }: PagesContext): Promise<Response> {
+  const db = env.RATE_LIMIT_DB;
+  if (!db) {
+    return Promise.resolve(
+      new Response(JSON.stringify({ error: 'unavailable' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+      }),
+    );
+  }
+  const code = params?.code;
+  return handleScreen(request, typeof code === 'string' ? code : '', {
+    store: d1ScreenStore(db),
+    limiter: createCounterRateLimiter(prefixed(d1CounterStore(db), 'screen:'), SCREEN_WRITE_LIMITS),
+    now: () => Date.now(),
+    clientIp: (r) => r.headers.get('cf-connecting-ip') ?? 'unknown',
+    appOrigin: env.APP_ORIGIN,
+  });
 }
 
 /** Without the counter database the cost guard can't hold across instances, so AI stays off. */

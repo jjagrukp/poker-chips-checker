@@ -126,6 +126,26 @@ describe('clock store', () => {
     expect(s().tournament?.clock).toMatchObject({ status: 'paused', remainingMs: 9 * MINUTE });
   });
 
+  it('reports each committed change to onSaved, but not a refused one (spec 08)', async () => {
+    const { s, repos, clock, platform } = await setup(activeFrom());
+    const onSaved = vi.fn();
+    platform.onSaved = onSaved;
+    clock.advance(MINUTE);
+    await s().command(pause);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    const [tournament, schedule] = onSaved.mock.calls[0] as [Tournament, { id: string }];
+    expect(tournament.clock).toMatchObject({ status: 'paused', remainingMs: 9 * MINUTE });
+    expect(schedule.id).toBe(holdemSchedule().id);
+
+    const stored = await repos.tournaments.get('t1');
+    if (!stored) throw new Error('missing');
+    const other = applyClockCommand(stored, holdemSchedule(), T0 + 2 * MINUTE, resume);
+    await repos.tournaments.commit({ tournament: other.tournament, events: other.events });
+    await s().command(resume);
+    expect(s().warning).toBe('conflict');
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
   it('re-reads when the controller tab saves', async () => {
     const { s, repos, platform } = await setup(activeFrom(), { role: 'viewer' });
     const other = applyClockCommand(activeFrom(), holdemSchedule(), T0 + MINUTE, pause);

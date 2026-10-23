@@ -57,6 +57,38 @@ export const messages = {
   'backup.import.writeFailed': "The backup couldn't be saved. Nothing was imported.",
   'tabs.viewerMode': "This tournament is being run in another tab. You're viewing it here.",
   'tabs.takeControl': 'Take control',
+
+  'share.open': 'Show on a TV',
+  'share.title': 'Show the clock on a TV',
+  'share.intro':
+    'On the TV or laptop, open the link, or go to {address} and type the code. You keep control from this phone.',
+  'share.code': 'Code',
+  'share.link': 'Link',
+  'share.copy': 'Copy link',
+  'share.copied': 'Link copied.',
+  'share.share': 'Share link',
+  'share.stop': 'Stop showing on TV',
+  'share.close': 'Close',
+  'share.status.sending': 'Sending the latest clock…',
+  'share.status.live': 'The TV link is up to date.',
+  'share.status.offline':
+    "Can't reach the TV link right now. It'll catch up once this phone is back online.",
+  'share.status.failed': "The TV link didn't accept the latest clock. Stop showing on TV, then start again.",
+  'share.privacy':
+    "While you share, the tournament name, clock, blinds and player numbers are kept on our server, and deleted 24 hours after your last change. Player names and your chips stay on this phone. Anyone with the code can watch; only this phone can control it.",
+  'screen.unavailable': "Showing a clock on another screen isn't available here.",
+
+  'screen.title': 'Show a clock on this screen',
+  'screen.codeLabel': "Code from the host's phone",
+  'screen.codeHint': 'On the phone running the clock, choose "Show on a TV" to get the code.',
+  'screen.open': 'Show clock',
+  'screen.badCode': 'The code is 8 letters and numbers, like ABCD-2345.',
+  'screen.loading': 'Connecting to the clock…',
+  'screen.ended': 'This screen link has ended. Ask the host for a new code.',
+  'screen.reconnecting': 'Reconnecting… The clock keeps running on this screen.',
+  'screen.waiting': "The tournament hasn't started yet. This screen will update when it does.",
+  'screen.finished': '{name} has finished.',
+  'screen.another': 'Use another code',
   'storage.unavailable':
     "This browser won't let the app save anything, so it can't run here. Private browsing can cause this.",
   'storage.durability.installHint': 'On iPhone or iPad, tap Share, then Add to Home Screen.',

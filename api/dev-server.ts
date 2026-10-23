@@ -4,6 +4,7 @@ import { MAX_REQUEST_BYTES } from '../src/features/chip-inventory/photo/schema';
 import { handleAnalyseChips, rateLimitsFrom, type PhotoEnv } from './analyse-chips';
 import { handleConfig } from './config';
 import { createMemoryRateLimiter } from './rate-limit';
+import { createMemoryScreenStore, handleScreen, SCREEN_WRITE_LIMITS } from './screens';
 
 // `npm run dev` / `vite preview` only: serves /api/* through the same Web Fetch handlers the host runs.
 
@@ -36,14 +37,25 @@ async function send(res: ServerResponse, response: Response) {
 
 export function devApi(env: PhotoEnv): Plugin {
   const limiter = createMemoryRateLimiter(rateLimitsFrom(env));
+  const screens = createMemoryScreenStore();
+  const screenLimiter = createMemoryRateLimiter(SCREEN_WRITE_LIMITS);
   const mount = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use((req, res, next) => {
-      const path = req.url?.split('?')[0];
-      if (path !== '/api/config' && path !== '/api/analyse-chips') return next();
+      const path = req.url?.split('?')[0] ?? '';
+      const screen = /^\/api\/screens\/([^/]+)$/.exec(path)?.[1];
+      if (path !== '/api/config' && path !== '/api/analyse-chips' && !screen) return next();
       const origin = `http://${req.headers.host ?? 'localhost'}`;
       void toRequest(req, origin)
         .then((request) =>
-          path === '/api/config'
+          screen
+            ? handleScreen(request, screen, {
+                store: screens,
+                limiter: screenLimiter,
+                now: () => Date.now(),
+                clientIp: () => req.socket.remoteAddress ?? 'unknown',
+                appOrigin: env.APP_ORIGIN,
+              })
+            : path === '/api/config'
             ? handleConfig(request, env)
             : handleAnalyseChips(request, env, {
                 fetch,

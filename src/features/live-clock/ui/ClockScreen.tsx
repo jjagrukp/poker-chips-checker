@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useStore } from 'zustand';
 import { alertEnabled } from '@/core/alerts/alerts';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
+import type { Schedule } from '@/core/scheduling/schedule';
+import type { Tournament } from '@/core/tournaments/tournament';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
 import { ResultsScreen } from '@/features/results/ui/ResultsScreen';
 import { setupPath } from '@/features/tournament-setup/ui/paths';
@@ -22,9 +24,11 @@ interface Props {
   repos: Repositories<Inventory>;
   ctx: ModuleContext;
   platform: ClockPlatform;
+  /** Extra controller-only panel under the controls (the app adds "Show on a TV"). */
+  controllerExtras?: ((tournament: Tournament, schedule: Schedule) => ReactNode) | undefined;
 }
 
-export function ClockScreen({ tournamentId, repos, ctx, platform }: Props) {
+export function ClockScreen({ tournamentId, repos, ctx, platform, controllerExtras }: Props) {
   const t = useT();
   const [store] = useState(() => createClockStore({ tournamentId, repos, ctx, platform }));
   useEffect(() => store.getState().init(), [store]);
@@ -73,6 +77,7 @@ export function ClockScreen({ tournamentId, repos, ctx, platform }: Props) {
           ctx={ctx}
           platform={platform}
           audio={audio}
+          extras={controllerExtras?.(tournament, schedule)}
         />
       );
     case 'completed':

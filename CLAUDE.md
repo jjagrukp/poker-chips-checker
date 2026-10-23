@@ -43,7 +43,8 @@ one serverless function (Web Fetch API handler) for AI photo analysis.
 - Every persisted record has `schemaVersion` and is parsed with Zod on read.
 - AI output is untrusted input: validate with Zod server-side and client-side.
 - No accounts, no auth, no cloud DB, no chatbot, no new dependencies without a
-  DECISIONS.md entry.
+  DECISIONS.md entry. Sole exception: the opt-in screen-share relay (D42, spec 08), which holds
+  only the latest clock snapshot and expires it after 24 h.
 - Australian English in UI copy. All user-facing strings live in the message catalogue
   (`src/shared/messages/`), with `playful` and `neutral` variants.
 - Never claim tests passed unless `test-runner` reported it in this session.

@@ -18,6 +18,10 @@ live in a D1 database. Wrangler runs through `npx`; nothing to install.
    (`postbuild` fails the build if a key or key name shows up in `dist`).
 7. Set a monthly spend limit in the provider's console. `DAILY_REQUEST_CAP` is the app's own cap.
 
+Screen share (M12, spec 08) needs the `screens` table: after pulling M12 run
+`npx wrangler d1 migrations apply tournament-rate-limits --remote` again (applies `0002_screens.sql`),
+then deploy. Without the D1 binding `/api/screens/*` answers `503 unavailable`.
+
 Git-connected builds work too: build command `npm run build`, output `dist`, env `NODE_VERSION=22`.
 The `wrangler.toml` vars and D1 binding still apply; set the secret in the dashboard.
 

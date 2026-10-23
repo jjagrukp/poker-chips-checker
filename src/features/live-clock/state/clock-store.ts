@@ -46,6 +46,8 @@ export interface ClockPlatform {
   notifier: AlertNotifier;
   /** After a tournament first starts (the app asks for persistent storage then). */
   onStarted?: () => void;
+  /** After every committed change (screen share pushes it to the TV, spec 08). */
+  onSaved?: (tournament: Tournament, schedule: Schedule) => void;
 }
 
 export interface Recovery {
@@ -155,8 +157,10 @@ export function createClockStore({
         set({ warning: 'conflict' });
         return false;
       }
-      set({ tournament: change.tournament, schedule: change.schedules?.[0] ?? get().schedule });
+      const schedule = change.schedules?.[0] ?? get().schedule;
+      set({ tournament: change.tournament, schedule });
       channel?.notifySaved(change.tournament.clock?.revision);
+      if (schedule) platform.onSaved?.(change.tournament, schedule);
       return true;
     };
 

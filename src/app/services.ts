@@ -10,6 +10,12 @@ import { openDatabase } from '@/infrastructure/indexeddb/database';
 import { appStatus } from '@/infrastructure/pwa/app-status';
 import type { Tone } from '@/shared/messages';
 import { createRepositories } from '@/infrastructure/indexeddb/repositories';
+import {
+  createScreenShareService,
+  type ScreenShareService,
+} from '@/features/screen-share/service';
+import { createScreenClient, type ScreenClient } from '@/infrastructure/screen-share/client';
+import { createShareStorage, newShare } from '@/infrastructure/screen-share/shares';
 
 // Composition root for storage (D15): the only place repositories are created.
 
@@ -22,6 +28,10 @@ export interface Services {
   photo?: PhotoService | undefined;
   /** Backup/import/delete-all (Settings); left out, Settings has no data section. */
   data?: DataTools | undefined;
+  /** Phone side of "Show on a TV" (spec 08); left out, the clock has no share button. */
+  screenShare?: ScreenShareService | undefined;
+  /** TV side: reads a shared clock; left out, /screen can't load one. */
+  screenClient?: ScreenClient | undefined;
 }
 
 export const ServicesContext = createContext<Services | null>(null);
@@ -39,9 +49,19 @@ export async function openServices(): Promise<Services> {
     onReplaced: () => appStatus.set({ storageReplaced: true }),
   });
   const repos = createRepositories(db, { inventory: inventoryRecord });
+  const screenClient = createScreenClient((input, init) => fetch(input, init));
   return {
     repos,
     ctx: browserContext,
+    screenClient,
+    screenShare: createScreenShareService({
+      client: screenClient,
+      storage: createShareStorage(),
+      newShare: () => newShare(),
+      now: browserContext.clock.now,
+      setTimer: (run, ms) => setTimeout(run, ms),
+      clearTimer: (timer) => clearTimeout(timer as ReturnType<typeof setTimeout>),
+    }),
     photo: createBrowserPhotoService(),
     data: createDataTools(db, repos, {
       inventory: inventoryRecord,

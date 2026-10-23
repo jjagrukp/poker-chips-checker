@@ -5,6 +5,8 @@ import {
   analyseOnCloudflare,
   configOnCloudflare,
   d1CounterStore,
+  d1ScreenStore,
+  screensOnCloudflare,
   notFoundOnCloudflare,
   withApiHeaders,
   type CloudflareEnv,
@@ -18,10 +20,9 @@ import { headersFile } from './security-headers';
 // (node:sqlite) with the real migration. No network: the model API is stubbed.
 
 const sqlite = await import('node:sqlite').catch(() => null);
-const MIGRATION = readFileSync(
-  new URL('../migrations/0001_rate_counts.sql', import.meta.url),
-  'utf8',
-);
+const MIGRATION = ['0001_rate_counts.sql', '0002_screens.sql']
+  .map((file) => readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'))
+  .join('\n');
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 const ORIGIN = 'https://app.example';
@@ -173,5 +174,63 @@ describe('rateKeyIp', () => {
     expect(rateKeyIp('2001:DB8::1')).toBe('2001:db8:0:0');
     expect(rateKeyIp('2001:db8:1:2::')).toBe('2001:db8:1:2');
     expect(rateKeyIp('::1')).toBe('0:0:0:0');
+  });
+});
+
+describe.skipIf(!sqlite)('d1ScreenStore (D42)', () => {
+  const T = 1_000_000;
+
+  it('claims a free code, lets the same key update, refuses another key', async () => {
+    const store = d1ScreenStore(database().d1);
+    expect(await store.put('ABCD2345', 'hash-a', '{"v":1}', T)).toBe(true);
+    expect(await store.put('ABCD2345', 'hash-a', '{"v":2}', T + 1)).toBe(true);
+    expect(await store.put('ABCD2345', 'hash-b', '{"v":3}', T + 2)).toBe(false);
+    expect(await store.get('ABCD2345', T + 3)).toEqual({ body: '{"v":2}', receivedAt: T + 1 });
+  });
+
+  it('hides expired rows, lets a new key take them over and prunes them', async () => {
+    const { d1 } = database();
+    const store = d1ScreenStore(d1);
+    await store.put('ABCD2345', 'hash-a', '{"v":1}', T);
+    await store.put('WXYZ6789', 'hash-a', '{"v":1}', T);
+    const later = T + DAY;
+    expect(await store.get('ABCD2345', later)).toBeNull();
+    expect(await store.put('ABCD2345', 'hash-b', '{"v":9}', later)).toBe(true);
+    expect(await store.get('ABCD2345', later)).toEqual({ body: '{"v":9}', receivedAt: later });
+    // The other expired row went in the same write.
+    const count = await d1.prepare('SELECT COUNT(*) AS n FROM screens').first<{ n: number }>();
+    expect(count?.n).toBe(1);
+  });
+
+  it('deletes only with the matching key hash', async () => {
+    const store = d1ScreenStore(database().d1);
+    await store.put('ABCD2345', 'hash-a', '{}', T);
+    await store.delete('ABCD2345', 'hash-b');
+    expect(await store.get('ABCD2345', T)).not.toBeNull();
+    await store.delete('ABCD2345', 'hash-a');
+    expect(await store.get('ABCD2345', T)).toBeNull();
+  });
+
+  it('serves the relay through Pages, and reports unavailable without the database', async () => {
+    const env: CloudflareEnv = { RATE_LIMIT_DB: database().d1 };
+    const put = new Request(`${ORIGIN}/api/screens/ABCD2345`, {
+      method: 'PUT',
+      headers: { origin: ORIGIN, 'x-screen-key': 'k'.repeat(22), 'cf-connecting-ip': '198.51.100.7' },
+      body: JSON.stringify({
+        schemaVersion: 1,
+        tournament: { id: 't1' },
+        schedule: { id: 's1' },
+        sentAt: 1,
+      }),
+    });
+    const params = { code: 'ABCD2345' };
+    expect((await screensOnCloudflare({ ...context(put, env), params })).status).toBe(200);
+    const get = new Request(`${ORIGIN}/api/screens/ABCD2345`);
+    const reply = await screensOnCloudflare({ ...context(get, env), params });
+    expect(((await reply.json()) as { snapshot: { sentAt: number } }).snapshot.sentAt).toBe(1);
+
+    const off = await screensOnCloudflare({ ...context(get, {}), params });
+    expect(off.status).toBe(503);
+    expect(await off.json()).toEqual({ error: 'unavailable' });
   });
 });

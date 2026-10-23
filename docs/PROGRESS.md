@@ -1,11 +1,14 @@
 # Progress
 
 ## Current state
-Active milestone: M11
-Status: code complete, committed. Left for the host (needs their Cloudflare account): run docs/DEPLOY.md
-(D1 create + id into wrangler.toml, migrations, secret, deploy), `npm run check:api -- <url>`, then docs/TEST-NIGHT.md.
-Last completed: M10
+Active milestone: none (M12 done; nothing further on the roadmap)
+Status: M12 committed. Host to run `npx wrangler d1 migrations apply tournament-rate-limits --remote`
+(0002_screens.sql) and redeploy, then try the TV item in docs/TEST-NIGHT.md.
+Last completed: M12
 Open issues / follow-ups:
+- Screen share (D42): the TV uses default alert prefs and ignores the host's mute (mute lives in Settings,
+  not the snapshot); GET `/api/screens/:code` has no rate limit (~43k D1 reads/day per TV, inside the free
+  tier); host must apply migration 0002 before deploying.
 - Cross-layer imports must use the `@/` alias (see D10); boundary rules also ban dynamic import().
 - Save every step via `repos.tournaments.commit({tournament, schedules?, events?, expectedClockRevision?})` (D16).
 - AI photo: provider switchable (D34); compare Claude vs Gemini and real-model quality on test night.
@@ -35,3 +38,4 @@ M8 — 2026-10-23 — "M8: results & presets" — results screen (positions, edi
 M9 — 2026-10-23 — "M9: AI chip photo" — Web Fetch endpoint (size/magic-byte/origin checks, per-IP + daily cap, strict tool + Zod, 25 s + one retry), /api/config flag, client downscale + EXIF strip, photo panel → unconfirmed review rows, manual fallback on every failure
 M10 — 2026-10-23 — "M10: hardening" — PWA offline shell, Settings (tone, alerts, break-end default, backup/import/delete all, storage status, limitations), durability/quarantine/update notices, CSP headers, focus fixes, e2e acceptance matrix on Chromium + WebKit
 M11 — 2026-10-23 — "M11: deploy" — Cloudflare Pages adapter (D1 atomic rate limiter, CF-Connecting-IP, /api headers + HSTS, JSON 404), wrangler.toml + migration, bundle-secret check, live API/burst check, /limitations page, DEPLOY + TEST-NIGHT docs (host still to deploy)
+M12 — 2026-10-23 — "M12: screen share" — phone as remote, TV as display: share code + link, latest-wins snapshot push after every commit (redacted: no inventory/names/results), /api/screens/:code relay on D1 (write key hashed, 24 h expiry, origin + per-IP write limit, 64 KB cap), /screen code entry + read-only TV clock with offset-corrected time, sound and wake lock, reconnecting/ended states; e2e phone → TV

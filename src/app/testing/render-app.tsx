@@ -4,7 +4,9 @@ import { MemoryRouter } from 'react-router-dom';
 import type { ModuleContext } from '@/core/modules/contract';
 import type { PhotoService } from '@/features/chip-inventory/photo/service';
 import type { ClockPlatform } from '@/features/live-clock/state/clock-store';
+import type { ScreenShareService } from '@/features/screen-share/service';
 import type { DataTools } from '@/infrastructure/backup/data-tools';
+import type { ScreenClient } from '@/infrastructure/screen-share/client';
 import { openAppTestDb, openAppTestStorage } from '@/infrastructure/testing/storage';
 import { ServicesProvider } from '../ServicesProvider';
 import { AppRoutes } from './AppRoutes';
@@ -22,6 +24,8 @@ interface Options {
   photo?: PhotoService;
   /** Defaults to real data tools when the storage is new; pass them to keep them on a remount. */
   data?: DataTools;
+  screenShare?: ScreenShareService;
+  screenClient?: ScreenClient;
 }
 
 /** Pass `repos` to remount on the same storage (a reload). */
@@ -32,7 +36,15 @@ export async function renderApp(path = '/', existing?: AppRepos, options: Option
   const ctx = options.ctx ?? testContext();
   const view = render(
     <ServicesProvider
-      services={{ repos, ctx, clockPlatform: options.clockPlatform, photo: options.photo, data }}
+      services={{
+        repos,
+        ctx,
+        clockPlatform: options.clockPlatform,
+        photo: options.photo,
+        data,
+        screenShare: options.screenShare,
+        screenClient: options.screenClient,
+      }}
     >
       <MemoryRouter initialEntries={[path]}>
         <AppRoutes />

@@ -75,9 +75,18 @@ interface Props {
     'phase' | 'tournament' | 'schedule' | 'config' | 'role' | 'muted' | 'alertPrefs' | 'recovery' | 'warning'
   >;
   ctx: ModuleContext;
-  platform: ClockPlatform;
+  platform: Pick<ClockPlatform, 'monotonic' | 'wakeLock' | 'audio' | 'notifier'>;
   /** Unlocked on the first gesture by ClockScreen (browsers block audio until then). */
   audio: { state: AudioState; unlock: () => void };
+  /** Controller-only panel under the controls. */
+  extras?: ReactNode;
+  /**
+   * Shared-screen display (spec 08): read-only, big layout, no home link or viewer banner, but
+   * it keeps the screen awake and sounds the alerts, since the TV is the room's speaker.
+   */
+  screen?: boolean;
+  /** A warning shown above the clock (a shared screen's "Reconnecting…"). */
+  notice?: ReactNode;
 }
 
 export function LiveClock({
@@ -90,9 +99,14 @@ export function LiveClock({
   ctx,
   platform,
   audio,
+  extras,
+  screen = false,
+  notice,
 }: Props) {
   const t = useT();
   const controller = state.role === 'controller';
+  /** This device plays the alerts: the controlling tab, or a shared screen. */
+  const speaker = controller || screen;
   const options = useMemo(
     () => ({ breakEndBehaviour: tournament.settings.breakEndBehaviour }),
     [tournament.settings.breakEndBehaviour],
@@ -123,7 +137,8 @@ export function LiveClock({
 
   const view = derive(now);
   const model = clockScreen(schedule, anchor, view, tournament, config);
-  const wakeLock = useWakeLock(platform.wakeLock, controller && view.status === 'running');
+  // A TV stays awake while paused too: it's on show the whole night.
+  const wakeLock = useWakeLock(platform.wakeLock, screen || (controller && view.status === 'running'));
   const fullscreen = useFullscreen();
   const [confirming, setConfirming] = useState<'previous' | 'end' | null>(null);
   const [editing, setEditing] = useState(false);
@@ -143,6 +158,7 @@ export function LiveClock({
     prefs: state.alertPrefs,
     muted: state.muted,
     controller,
+    sound: speaker,
     onFired: (keys) => void actions.markAlertsFired(keys),
     notify: (fired) => ({
       title: tournament.name ?? t('home.untitled'),
@@ -193,7 +209,7 @@ export function LiveClock({
   );
 
   const nowLabel = `${title}${model.blinds ? ` ${formatBlinds(model.blinds.sb, model.blinds.bb)}` : ''}`;
-  const tv = fullscreen.active;
+  const tv = fullscreen.active || screen;
 
   return (
     <main
@@ -208,7 +224,8 @@ export function LiveClock({
           {t('setup.home')}
         </Link>
       )}
-      {!controller && (
+      {notice && <Banner tone="warning">{notice}</Banner>}
+      {!controller && !screen && (
         <Banner tone="info">
           <span>{t('tabs.viewerMode')}</span>
           <button type="button" className={buttonSecondary} onClick={actions.takeControl}>
@@ -226,7 +243,7 @@ export function LiveClock({
           {t(`clock.warning.${state.warning}`)}
         </Banner>
       )}
-      {controller && !state.muted && audio.state === 'locked' && (
+      {speaker && !state.muted && audio.state === 'locked' && (
         <Banner tone="info">
           <span>{t('alerts.locked')}</span>
           <button type="button" className={buttonSecondary} onClick={audio.unlock}>
@@ -234,7 +251,7 @@ export function LiveClock({
           </button>
         </Banner>
       )}
-      {controller && audio.state === 'unsupported' && (
+      {speaker && audio.state === 'unsupported' && (
         <p className="text-sm text-ink-muted">{t('alerts.unsupported')}</p>
       )}
       {alert && (
@@ -254,7 +271,7 @@ export function LiveClock({
           className="pointer-events-none fixed inset-0 z-[60] bg-state-warning opacity-0 motion-safe:animate-alert-flash motion-reduce:hidden"
         />
       )}
-      {controller && (wakeLock === 'unsupported' || wakeLock === 'denied') && (
+      {speaker && (wakeLock === 'unsupported' || wakeLock === 'denied') && (
         <p className="text-sm text-ink-muted">{t('clock.wakeLock.unavailable')}</p>
       )}
 
@@ -424,7 +441,7 @@ export function LiveClock({
             {t('clock.control.alerts')}
           </button>
           <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
-            {t(tv ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
+            {t(fullscreen.active ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
           </button>
           {config && (
             <button
@@ -444,11 +461,12 @@ export function LiveClock({
       {!controller && (
         <div className="flex justify-center">
           <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
-            {t(tv ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
+            {t(fullscreen.active ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
           </button>
         </div>
       )}
       {controller && !tv && <p className="text-center text-sm text-ink-muted">{t('clock.shortcuts')}</p>}
+      {controller && !tv && extras}
 
       {controller && alertSettings && (
         <AlertSettings

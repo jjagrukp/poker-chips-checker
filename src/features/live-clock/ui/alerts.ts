@@ -34,7 +34,10 @@ interface AlertsOptions {
   notifier: AlertNotifier;
   prefs: AlertPrefs;
   muted: boolean;
+  /** Persists fired keys and sends notifications. */
   controller: boolean;
+  /** Plays sounds: the controller, or a shared screen (spec 08). */
+  sound: boolean;
   onFired: (keys: string[]) => void;
   notify: (alert: PlannedAlert) => { title: string; body: string };
 }
@@ -51,7 +54,7 @@ export function useAlerts(o: AlertsOptions): PlannedAlert | undefined {
   const fired = useRef(new Set<string>());
   const scheduled = useRef(new Set<string>());
 
-  const soundOn = o.controller && !o.muted && o.audioState === 'ready';
+  const soundOn = o.sound && !o.muted && o.audioState === 'ready';
   const timeline = `${o.schedule.id}|${o.anchor.revision}|${o.options.breakEndBehaviour}|${soundOn}|${JSON.stringify(o.prefs.enabled ?? {})}`;
 
   useEffect(() => {
@@ -103,7 +106,7 @@ export function useAlerts(o: AlertsOptions): PlannedAlert | undefined {
       }
       previous = now;
 
-      const sound = c.controller && !c.muted && c.audio.state === 'ready';
+      const sound = c.sound && !c.muted && c.audio.state === 'ready';
       const enabled = due.live.filter((a) => alertEnabled(c.prefs, a.type));
       for (const alert of enabled) {
         if (sound && !scheduled.current.has(alert.key)) c.audio.play(alert.type, 0, alert.beat);
