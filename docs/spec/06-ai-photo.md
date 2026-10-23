@@ -18,12 +18,12 @@ or schedules. The app is fully usable with AI disabled or failing.
 
 ## 2. Endpoint `api/analyse-chips.ts`
 Standard Web Fetch handler. Steps: method + content-type check → size ≤ 2 MB → magic-byte
-check → rate limit → call Anthropic Messages API (model from `CHIP_VISION_MODEL`, key from
-`ANTHROPIC_API_KEY`, timeout 25 s, one retry on 5xx/overload) with forced tool use whose
-input schema is the response schema → Zod-validate → return. Never log request bodies or
+check → rate limit → call the vision provider chosen by `AI_PROVIDER` (`gemini` or `anthropic`, D34;
+model from `CHIP_VISION_MODEL`, timeout 25 s, one retry on 5xx/overload) with structured output
+whose schema is the response schema → Zod-validate → return. Never log request bodies or
 model output beyond status/latency. No storage.
 
-Env: `ANTHROPIC_API_KEY`, `CHIP_VISION_MODEL`, `AI_PHOTO_ENABLED` (true/false),
+Env: `AI_PROVIDER`, `GEMINI_API_KEY` or `ANTHROPIC_API_KEY`, `CHIP_VISION_MODEL`, `AI_PHOTO_ENABLED` (true/false),
 `RATE_LIMIT_PER_IP_PER_HOUR` (default 10), `DAILY_REQUEST_CAP` (default 500).
 `GET /api/config` → `{ aiPhotoEnabled }`; the client hides the photo route when false or
 unreachable.

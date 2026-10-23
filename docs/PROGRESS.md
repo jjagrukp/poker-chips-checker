@@ -7,7 +7,7 @@ Last completed: M10
 Open issues / follow-ups:
 - Cross-layer imports must use the `@/` alias (see D10); boundary rules also ban dynamic import().
 - Save every step via `repos.tournaments.commit({tournament, schedules?, events?, expectedClockRevision?})` (D16).
-- AI photo (D29, D30): M11 adds the host adapter (Cloudflare Pages Function: `fetch`, durable `RateLimiter`,
+- AI photo (D29, D30, D34): provider is switchable (Gemini or Claude); compare both on M11 test night. M11 adds the host adapter (Cloudflare Pages Function: `fetch`, durable `RateLimiter`,
   trusted `clientIp`). Real-model prompt/quality untested — check on M11 test night. "Try another photo" appends rows.
 - M11: the host adapter adds security headers to `/api/*` responses (D33); consider HSTS.
 - M11: link the Settings "About and limitations" list from the limitations page; verify `_headers` on the host.

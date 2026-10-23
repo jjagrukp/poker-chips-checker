@@ -177,6 +177,12 @@ One source (`api/security-headers.ts`) for a strict CSP (`'self'` only; images a
 Permissions-Policy and COOP. The build emits Cloudflare Pages `_headers`; `vite preview` sends the same, so e2e runs under it.
 `_headers` doesn't cover Function responses: the M11 host adapter adds nosniff/no-referrer to `/api/*` (and HSTS).
 
+D34 — Switchable vision provider (refines D6, D30)
+`AI_PROVIDER=gemini|anthropic` (default anthropic; unknown → feature off). `api/vision-providers.ts` only shapes the request
+and extracts the analysis; checks, retry, deadline and Zod stay in the handler. Gemini: raw `generateContent` (no SDK), key
+in `x-goog-api-key` (never the URL), `responseJsonSchema` = the same report schema, only `finishReason: STOP` accepted.
+Default `gemini-3.8-flash`. Needs a paid key: free-tier data may be used by Google, which breaks the "never stored" promise.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

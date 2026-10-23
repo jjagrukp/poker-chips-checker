@@ -248,6 +248,82 @@ describe('handleAnalyseChips', () => {
   });
 });
 
+describe('handleAnalyseChips with Gemini (AI_PROVIDER=gemini)', () => {
+  const GEMINI: PhotoEnv = {
+    AI_PROVIDER: 'gemini',
+    GEMINI_API_KEY: 'gemini-key',
+    AI_PHOTO_ENABLED: 'true',
+  };
+  const geminiReply = (text: string, finishReason = 'STOP') =>
+    Response.json({
+      candidates: [
+        {
+          content: { role: 'model', parts: [{ text: 'hmm', thought: true }, { text }] },
+          finishReason,
+        },
+      ],
+    });
+
+  it('sends the image and schema, keeps the key out of the URL, and validates the JSON', async () => {
+    const { deps: d, fetchMock } = deps(async () => geminiReply(JSON.stringify(TOOL_INPUT)));
+    const { status, body } = await run(request(), d, GEMINI);
+    expect(status).toBe(200);
+    expect(body).toMatchObject({ schemaVersion: 1, chipTypes: [{ primaryColour: 'red' }] });
+
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(String(url)).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
+    );
+    expect(new Headers(init?.headers).get('x-goog-api-key')).toBe('gemini-key');
+    const sent = JSON.parse(String(init?.body));
+    expect(sent.contents[0].parts[0].inlineData).toMatchObject({ mimeType: 'image/jpeg' });
+    expect(sent.generationConfig).toMatchObject({ responseMimeType: 'application/json' });
+    expect(sent.generationConfig.responseJsonSchema.required).toContain('chipTypes');
+  });
+
+  it('uses CHIP_VISION_MODEL when set', async () => {
+    const { deps: d, fetchMock } = deps(async () => geminiReply(JSON.stringify(TOOL_INPUT)));
+    await run(request(), d, { ...GEMINI, CHIP_VISION_MODEL: 'gemini-3.5-flash-lite' });
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/models/gemini-3.5-flash-lite:');
+  });
+
+  it('treats cut-off, blocked or non-JSON replies as invalid', async () => {
+    for (const reply of [
+      () => geminiReply(JSON.stringify(TOOL_INPUT), 'MAX_TOKENS'),
+      () => geminiReply('', 'SAFETY'),
+      () => geminiReply('not json'),
+      () => Response.json({ promptFeedback: { blockReason: 'SAFETY' } }),
+    ]) {
+      const { deps: d } = deps(async () => reply());
+      expect(await run(request(), d, GEMINI)).toEqual({
+        status: 502,
+        body: { error: 'invalid_response' },
+      });
+    }
+  });
+
+  it('retries once on overload (503)', async () => {
+    let calls = 0;
+    const { deps: d } = deps(async () =>
+      ++calls === 1 ? new Response('busy', { status: 503 }) : geminiReply(JSON.stringify(TOOL_INPUT)),
+    );
+    expect((await run(request(), d, GEMINI)).status).toBe(200);
+    expect(calls).toBe(2);
+  });
+
+  it('is off without its own key, or with an unknown provider', async () => {
+    const { deps: d, fetchMock } = deps(async () => geminiReply('{}'));
+    // The Anthropic key doesn't switch Gemini on.
+    expect((await run(request(), d, { ...GEMINI, GEMINI_API_KEY: '', ANTHROPIC_API_KEY: 'x' })).status).toBe(503);
+    expect((await run(request(), d, { ...ENV, AI_PROVIDER: 'openai' })).status).toBe(503);
+    expect(fetchMock).not.toHaveBeenCalled();
+    const get = new Request(`${ORIGIN}/api/config`);
+    expect(await handleConfig(get, { ...ENV, AI_PROVIDER: 'openai' }).json()).toEqual({
+      aiPhotoEnabled: false,
+    });
+  });
+});
+
 describe('parseToolInput', () => {
   it('trims to 12 proposals before validating', () => {
     const many = Array.from({ length: 15 }, (_, i) => ({
