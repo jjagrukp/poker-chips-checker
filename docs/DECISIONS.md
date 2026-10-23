@@ -195,6 +195,16 @@ Real photos hit the 25 s budget (504 timeout) with Gemini's default thinking. Th
 `generationConfig.thinkingConfig.thinkingLevel = "low"` (`minimal` isn't supported on every model). Chip
 identification needs little reasoning; the 25 s budget stays.
 
+D37 — Photo counting from side-on stacks (refines spec 06 §1.7, §3)
+The old "one stack per colour, top-down" tip hid every chip but the top one, so counts were always null.
+Tip now asks for side-on stacks or flat, non-overlapping chips; the prompt counts edges per stack and sets
+confidence (high = each chip counted clearly, medium = edges counted, may be off by a few). Prefill rule
+unchanged: high/medium only, always flagged "check count".
+
+D38 — Photo input without `capture` (refines spec 06 §1.2)
+`capture="environment"` made iOS open the camera only, so saved photos couldn't be chosen. Plain
+`accept="image/*"` gives the OS menu (library, camera, files) on iOS and Android.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

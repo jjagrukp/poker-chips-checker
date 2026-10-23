@@ -31,7 +31,8 @@ const TOOL_NAME = 'report_chips';
 
 const RULES = `- List each distinct physical chip type: primary colour, secondary colours (edge spots, inlays), edge pattern, and the printed value if clearly legible (otherwise null).
 - Use plain colour names a person would say, such as "white", "red", "dark blue".
-- Estimate how many chips of a type there are only when the chips are clearly separable; otherwise estimatedCount is null. Set countConfidence honestly.
+- Count the chips of each type when every chip can be seen: chips laid flat without overlap (count each chip), or stacks seen from the side (count the edges in each stack, then add the stacks). If chips are hidden (stacks seen from above, piles, overlaps), estimatedCount is null.
+- countConfidence: "high" only when every chip was counted individually and clearly; "medium" when edges were counted but a few may be miscounted; otherwise "low".
 - Report image quality problems in imageIssues.
 - If the image does not show poker chips, set status "not_chips" with no chip types. If you can't tell, set status "unclear".
 - At most ${MAX_PROPOSALS} chip types. proposalId is a short unique id such as "c1".

@@ -140,7 +140,6 @@ export function PhotoImport({ service, onProposals, onManual }: Props) {
             id={`${id}-file`}
             type="file"
             accept="image/*"
-            capture="environment"
             className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0];

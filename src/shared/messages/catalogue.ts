@@ -303,7 +303,7 @@ export const messages = {
   'photo.privacyDetail':
     "We shrink the photo on your device and remove its location and camera details first. The AI service only sees the picture, we don't keep it, and you check every result before anything is saved.",
   'photo.tips':
-    'For the best result: one stack per colour, spread out, good light, shot from above.',
+    'For counts too: shoot each stack from the side so every chip edge shows, or lay chips flat without overlapping. Good light, one colour per group.',
   'photo.pick': 'Take or choose a photo',
   'photo.preparing': 'Getting your photo ready…',
   'photo.analysing': 'Looking at your chips…',
