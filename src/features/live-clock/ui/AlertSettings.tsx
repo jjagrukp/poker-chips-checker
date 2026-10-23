@@ -6,6 +6,7 @@ import {
   type AlertPrefs,
   type AlertType,
 } from '@/core/alerts/alerts';
+import { useReveal } from '@/shared/components/reveal';
 import type { AlertAudio } from '@/infrastructure/audio/alert-audio';
 import type { AlertNotifier } from '@/infrastructure/notifications/notifier';
 import { buttonSecondary, card, hint, label } from '@/shared/components/styles';
@@ -38,6 +39,7 @@ export function AlertSettings({ prefs, muted, audio, notifier, onPrefs, onToggle
   useEffect(() => {
     if (popover) title.current?.focus();
   }, [popover]);
+  const panel = useReveal<HTMLElement>(popover);
 
   const test = async (type: Exclude<AlertType, 'recovery'>) => {
     // A test press is a gesture, so it can unlock audio too.
@@ -56,7 +58,7 @@ export function AlertSettings({ prefs, muted, audio, notifier, onPrefs, onToggle
   };
 
   return (
-    <section aria-labelledby={id} className={`${card} flex flex-col gap-4`}>
+    <section ref={panel} aria-labelledby={id} className={`${card} flex scroll-mt-4 flex-col gap-4`}>
       <h2 id={id} ref={title} tabIndex={-1} className="font-display text-2xl">
         {t('alerts.heading')}
       </h2>

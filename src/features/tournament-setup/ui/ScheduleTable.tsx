@@ -7,6 +7,7 @@ import { HoldemEditError, insertBreak, removeBreak, setLevel } from '@/modules/t
 import { formatBlinds, formatChips, formatDurationMin } from '@/modules/texas-holdem/format';
 import { levelData } from '@/modules/texas-holdem/generate';
 import { Icon } from '@/shared/components/Icon';
+import { useReveal } from '@/shared/components/reveal';
 import { buttonPrimary, buttonQuiet, input, label } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 
@@ -191,6 +192,7 @@ function LevelEditRow({ segment, onSave, onCancel }: EditProps) {
   const t = useT();
   const id = useId();
   const data = levelData(segment);
+  const row = useReveal<HTMLTableRowElement>();
   const [fields, setFields] = useState({
     sb: String(data?.sb ?? ''),
     bb: String(data?.bb ?? ''),
@@ -222,7 +224,7 @@ function LevelEditRow({ segment, onSave, onCancel }: EditProps) {
     </div>
   );
   return (
-    <tr className="border-b border-line bg-surface-high/60">
+    <tr ref={row} className="scroll-mt-4 border-b border-line bg-surface-high/60">
       <td colSpan={6} className="p-3">
         <fieldset className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <legend className="mb-1 font-semibold">

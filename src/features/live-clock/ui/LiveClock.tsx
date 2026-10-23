@@ -28,6 +28,7 @@ import { levelData } from '@/modules/texas-holdem/generate';
 import { MusicPanel } from '@/features/music/ui/MusicPanel';
 import { MusicPlayer } from '@/features/music/ui/MusicPlayer';
 import { Icon } from '@/shared/components/Icon';
+import { useReveal } from '@/shared/components/reveal';
 import {
   buttonPrimary,
   buttonQuiet,
@@ -973,6 +974,7 @@ function Confirm({
   const t = useT();
   const id = useId();
   const cancel = useRef<HTMLButtonElement>(null);
+  const panel = useReveal<HTMLDivElement>();
   const cancelRef = useRef(onCancel);
   cancelRef.current = onCancel;
   useEffect(() => {
@@ -992,10 +994,11 @@ function Confirm({
   }, []);
   return (
     <div
+      ref={panel}
       role="alertdialog"
       aria-modal="false"
       aria-labelledby={id}
-      className={`${card} flex flex-col gap-3`}
+      className={`${card} flex scroll-mt-4 flex-col gap-3`}
     >
       <p id={id}>{text}</p>
       <div className="flex flex-wrap gap-2">
@@ -1022,8 +1025,13 @@ function ExtensionPreview({
   onCancel: () => void;
 }) {
   const t = useT();
+  const panel = useReveal<HTMLElement>();
   return (
-    <section className={`${card} flex flex-col gap-3`} aria-label={t('clock.overtime.addLevels')}>
+    <section
+      ref={panel}
+      className={`${card} flex scroll-mt-4 flex-col gap-3`}
+      aria-label={t('clock.overtime.addLevels')}
+    >
       <p>{t('clock.overtime.preview')}</p>
       <ul className="list-disc pl-6">
         {result.diff.added.map((segment) => {

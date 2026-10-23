@@ -19,6 +19,8 @@ describe('MusicPanel', () => {
     const onChange = vi.fn();
     render(<MusicPanel music={undefined} onChange={onChange} onClose={() => undefined} />);
     const box = screen.getByLabelText('YouTube link');
+    // Opening Music with nothing playing lands on the link box.
+    expect(box).toHaveFocus();
     fireEvent.change(box, { target: { value: 'not a link' } });
     fireEvent.click(screen.getByRole('button', { name: 'Play on TV' }));
     expect(screen.getByRole('alert')).toHaveTextContent("doesn't look like a YouTube");

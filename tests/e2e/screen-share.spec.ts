@@ -44,6 +44,9 @@ test('a TV follows the phone through a shared code', async ({ page, browser }) =
   // here (tests stay offline), so the TV also shows that it can't reach it.
   await tvContext.route(/youtube/, (route) => route.abort());
   await page.getByRole('button', { name: 'Music', exact: true }).click();
+  // The panel opens below the controls; it scrolls to the link box, ready to paste.
+  await expect(page.getByLabel('YouTube link')).toBeFocused();
+  await expect(page.getByLabel('YouTube link')).toBeInViewport();
   await page.getByLabel('YouTube link').fill('https://youtu.be/dQw4w9WgXcQ');
   await page.getByRole('button', { name: 'Play on TV' }).click();
   await expect(page.getByText('Song playing on the TV.')).toBeVisible();

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { MusicSettings } from '@/core/tournaments/tournament';
 import { Icon } from '@/shared/components/Icon';
+import { useReveal } from '@/shared/components/reveal';
 import {
   buttonPrimary,
   buttonQuiet,
@@ -32,6 +33,13 @@ export function MusicPanel({ music, onChange, onClose }: Props) {
   const [link, setLink] = useState('');
   const [invalid, setInvalid] = useState(false);
   const [volume, setVolume] = useState(music?.volume ?? DEFAULT_VOLUME);
+  const panel = useReveal<HTMLElement>();
+  const linkBox = useRef<HTMLInputElement>(null);
+  // Nothing playing yet: the link box is what the host came for.
+  const startWithLink = useRef(music === undefined);
+  useEffect(() => {
+    if (startWithLink.current) linkBox.current?.focus({ preventScroll: true });
+  }, []);
   const latest = useRef({ music, onChange });
   latest.current = { music, onChange };
 
@@ -69,7 +77,11 @@ export function MusicPanel({ music, onChange, onClose }: Props) {
   };
 
   return (
-    <section aria-labelledby={id} className={`${card} mx-auto flex w-full max-w-xl flex-col gap-3`}>
+    <section
+      ref={panel}
+      aria-labelledby={id}
+      className={`${card} mx-auto flex w-full max-w-xl scroll-mt-4 flex-col gap-3`}
+    >
       <h2 id={id} className="flex items-center gap-2 font-display text-2xl font-semibold">
         <Icon name="music" className="size-6 text-accent" />
         {t('music.title')}
@@ -81,6 +93,7 @@ export function MusicPanel({ music, onChange, onClose }: Props) {
         </label>
         <input
           id={`${id}-link`}
+          ref={linkBox}
           type="url"
           inputMode="url"
           autoComplete="off"

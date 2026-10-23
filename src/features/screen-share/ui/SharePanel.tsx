@@ -4,6 +4,7 @@ import type { Tournament } from '@/core/tournaments/tournament';
 import { buttonPrimary, buttonQuiet, buttonSecondary, card } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import { Icon } from '@/shared/components/Icon';
+import { useReveal } from '@/shared/components/reveal';
 import type { ScreenShareService } from '../service';
 import { formatCode } from '../wire';
 
@@ -24,6 +25,7 @@ export function SharePanel({ service, tournament, schedule }: Props) {
   const status = useSyncExternalStore(service.subscribe, () => service.status(tournament.id));
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const panel = useReveal<HTMLElement>(open && code !== undefined);
   const latest = useRef({ tournament, schedule });
   latest.current = { tournament, schedule };
 
@@ -67,7 +69,11 @@ export function SharePanel({ service, tournament, schedule }: Props) {
   }
 
   return (
-    <section aria-labelledby={id} className={`${card} mx-auto flex w-full max-w-xl flex-col gap-3`}>
+    <section
+      ref={panel}
+      aria-labelledby={id}
+      className={`${card} mx-auto flex w-full max-w-xl scroll-mt-4 flex-col gap-3`}
+    >
       <h2 id={id} className="flex items-center gap-2 font-display text-2xl font-semibold">
         <Icon name="tv" className="size-6 text-accent" />
         {t('share.title')}

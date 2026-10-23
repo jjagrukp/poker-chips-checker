@@ -6,6 +6,7 @@ import type { EditOptions } from '@/core/timer/commands';
 import { ScheduleTable } from '@/features/tournament-setup/ui/ScheduleTable';
 import type { HoldemConfig } from '@/modules/texas-holdem/config';
 import { diffSchedules } from '@/modules/texas-holdem/edits';
+import { useReveal } from '@/shared/components/reveal';
 import { buttonPrimary, buttonQuiet, buttonSecondary, card } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import { endsCurrentNow } from '../domain/screen';
@@ -37,6 +38,7 @@ export function RunningEditor({
   const t = useT();
   const headingId = useId();
   const [draft, setDraft] = useState<Schedule | null>(null);
+  const panel = useReveal<HTMLElement>();
   const [restart, setRestart] = useState(false);
   const [confirmEndsNow, setConfirmEndsNow] = useState(false);
   const [pastChanged, setPastChanged] = useState(false);
@@ -70,7 +72,11 @@ export function RunningEditor({
   };
 
   return (
-    <section className={`${card} flex flex-col gap-3`} aria-labelledby={headingId}>
+    <section
+      ref={panel}
+      className={`${card} flex scroll-mt-4 flex-col gap-3`}
+      aria-labelledby={headingId}
+    >
       <div className="flex items-center justify-between gap-2">
         <h2 id={headingId} className="text-xl font-semibold">
           {t('clock.edit.heading')}

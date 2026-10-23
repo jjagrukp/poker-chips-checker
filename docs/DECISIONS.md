@@ -257,6 +257,12 @@ dependency: the TV loads YouTube's IFrame API script at runtime, so the CSP allo
 www.youtube.com and frame-src www.youtube-nocookie.com. Our own iframe sets
 referrerpolicy=strict-origin-when-cross-origin (embeds need a referrer; the page stays no-referrer).
 
+D47 — Opened panels scroll themselves into view
+Panels a button opens (Music, Alerts, Edit, Add levels, confirmations, Show on a TV, a setup
+level edit row) render inline, often off screen on a phone. Each root uses `useReveal()`
+(src/shared/components/reveal.ts): after mount, scrollIntoView block start, smooth unless reduced
+motion, with a scroll margin. Music also focuses its link box when nothing is playing.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

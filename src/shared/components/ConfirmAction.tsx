@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import { useReveal } from './reveal';
 import { buttonPrimary, buttonSecondary } from './styles';
 
 interface Props {
@@ -15,8 +16,15 @@ export function ConfirmAction({ text, confirmLabel, cancelLabel, onConfirm, onCa
   const cancel = useRef<HTMLButtonElement>(null);
   // Focus starts on Cancel so a stray Enter never deletes anything.
   useEffect(() => cancel.current?.focus(), []);
+  const panel = useReveal<HTMLDivElement>();
   return (
-    <div role="alertdialog" aria-modal="false" aria-labelledby={id} className="flex flex-col gap-2">
+    <div
+      ref={panel}
+      role="alertdialog"
+      aria-modal="false"
+      aria-labelledby={id}
+      className="flex scroll-mt-4 flex-col gap-2"
+    >
       <p id={id}>{text}</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" className={buttonPrimary} onClick={onConfirm}>
