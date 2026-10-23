@@ -54,6 +54,22 @@ test('a TV follows the phone through a shared code', async ({ page, browser }) =
   const player = tv.getByTitle('YouTube music player');
   await expect(player).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?/);
   await expect(tv.getByText("Can't reach YouTube right now.")).toBeVisible();
+  // The player has its own space: it never covers the clock or the details under it.
+  const box = await tv.getByRole('complementary', { name: 'Music' }).boundingBox();
+  for (const covered of [
+    tv.getByRole('timer', { name: 'Time left' }),
+    tv.getByRole('region', { name: 'Tournament details' }),
+  ]) {
+    const other = await covered.boundingBox();
+    expect(box && other).toBeTruthy();
+    if (!box || !other) continue;
+    const overlaps =
+      box.x < other.x + other.width &&
+      other.x < box.x + box.width &&
+      box.y < other.y + other.height &&
+      other.y < box.y + box.height;
+    expect(overlaps).toBe(false);
+  }
   await page.getByRole('button', { name: 'Stop music' }).click();
   await expect(player).toHaveCount(0);
 

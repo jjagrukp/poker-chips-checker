@@ -140,10 +140,11 @@ function Player({ music, alertKey, loadApi = loadYouTubeApi }: Props) {
     else p.seekTo(0, true);
   }, [ready, music.skips, music.listId]);
 
+  // Its own column on a big screen (the clock makes room for it); under the clock on a small one.
   return (
     <aside
       aria-label={t('music.tv.label')}
-      className="fixed bottom-[calc(1.5vh+3.5rem)] left-[2vw] z-[60] flex w-[200px] flex-col gap-2"
+      className="flex w-[200px] flex-col gap-2 self-center md:fixed md:bottom-[calc(1.5vh+3.5rem)] md:left-[2vw] md:z-[60]"
     >
       <iframe
         ref={frame}

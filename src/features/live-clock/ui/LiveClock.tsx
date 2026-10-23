@@ -275,6 +275,7 @@ export function LiveClock({
       : t('clock.control.startLevel', { label: title });
   const showReference = tournament.settings.showReference ?? false;
   const withReference = tv && showReference;
+  const withMusic = screen && tournament.settings.music !== undefined;
   const countdown = formatCountdown(view.remainingMs);
   // "1:00:00" has two more characters than "12:00": step the size down so it still fits.
   const long = countdown.length > 5;
@@ -290,6 +291,9 @@ export function LiveClock({
           ? `fixed inset-0 z-50 flex flex-col gap-4 overflow-auto bg-surface bg-[radial-gradient(120%_70%_at_50%_-10%,#0f3d2e99_0%,transparent_60%)] p-4 sm:gap-6 sm:p-8 ${
               // Keep in step with the panel's w-[30%] and right-[2vw] below.
               withReference ? 'lg:pr-[calc(30%+4vw)]' : ''
+            } ${
+              // The music player's column: keep in step with its 200 px and left-[2vw].
+              withMusic ? 'md:pl-[calc(200px+4vw)]' : ''
             }`
           : 'mx-auto flex w-full max-w-5xl flex-col gap-4'
       }
@@ -708,6 +712,7 @@ export function LiveClock({
         controller={controller}
         tv={tv}
         reference={withReference}
+        music={withMusic}
         onPlayers={(delta) => void actions.changePlayers(delta)}
       />
 
@@ -833,6 +838,8 @@ interface DetailsProps {
   tv: boolean;
   /** The hand rankings take the right of the screen, so tiles get a little smaller. */
   reference: boolean;
+  /** The TV's music player takes a column on the left too. */
+  music: boolean;
   onPlayers: (delta: number) => void;
 }
 
@@ -845,6 +852,7 @@ function Details({
   controller,
   tv,
   reference,
+  music,
   onPlayers,
 }: DetailsProps) {
   const { count, remaining } = tournament.participants;
@@ -855,7 +863,10 @@ function Details({
       <dl
         className={`grid gap-2 sm:gap-3 ${
           tv
-            ? `grid-cols-2 md:grid-cols-5 ${reference ? '[&_dd]:text-[min(1.8vw,4vh)]' : '[&_dd]:text-[min(2.6vw,4.5vh)]'}`
+            ? `grid-cols-2 ${
+                // Squeezed by both side columns: two rows of tiles until the screen is wide.
+                reference && music ? 'md:grid-cols-3 xl:grid-cols-5' : 'md:grid-cols-5'
+              } ${reference ? '[&_dd]:text-[min(1.8vw,4vh)]' : '[&_dd]:text-[min(2.6vw,4.5vh)]'}`
             : 'grid-cols-2 md:grid-cols-5'
         }`}
       >
