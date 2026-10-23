@@ -30,6 +30,7 @@ const PATHS = {
   copy: 'M9 9h10v11H9V9Zm-4 6V4h10',
   share: 'M12 15V3m0 0L8 7m4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7',
   trash: 'M5 7h14M10 7V4h4v3m-7 0 1 13h8l1-13',
+  cards: 'M4 7.5 11 5l3.5 12.5-7 2.5L4 7.5Zm9.5-3 6 1.5L17 18M15 9l2.5.7',
 } as const;
 
 export type IconName = keyof typeof PATHS;

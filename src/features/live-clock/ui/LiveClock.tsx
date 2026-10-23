@@ -53,6 +53,7 @@ import {
   useTicker,
   useWakeLock,
 } from './hooks';
+import { HandRankings } from './HandRankings';
 import { RunningEditor } from './RunningEditor';
 
 // Live clock screen (spec 01 §6). Everything shown is derived from the stored anchor at
@@ -234,6 +235,8 @@ export function LiveClock({
 
   const nowLabel = `${title}${model.blinds ? ` ${formatBlinds(model.blinds.sb, model.blinds.bb)}` : ''}`;
   const tv = fullscreen.active || screen;
+  const showReference = tournament.settings.showReference ?? false;
+  const withReference = tv && showReference;
   const countdown = formatCountdown(view.remainingMs);
   // "1:00:00" has two more characters than "12:00": step the size down so it still fits.
   const long = countdown.length > 5;
@@ -246,7 +249,10 @@ export function LiveClock({
     <main
       className={
         tv
-          ? 'fixed inset-0 z-50 flex flex-col gap-4 overflow-auto bg-surface bg-[radial-gradient(120%_70%_at_50%_-10%,#0f3d2e99_0%,transparent_60%)] p-4 sm:gap-6 sm:p-8'
+          ? `fixed inset-0 z-50 flex flex-col gap-4 overflow-auto bg-surface bg-[radial-gradient(120%_70%_at_50%_-10%,#0f3d2e99_0%,transparent_60%)] p-4 sm:gap-6 sm:p-8 ${
+              // Keep in step with the panel's w-[30%] and right-[2vw] below.
+              withReference ? 'lg:pr-[calc(30%+4vw)]' : ''
+            }`
           : 'mx-auto flex w-full max-w-5xl flex-col gap-4'
       }
     >
@@ -331,14 +337,19 @@ export function LiveClock({
 
       <section
         className={`relative flex flex-col items-center text-center ${
-          tv ? 'min-h-0 flex-1 justify-center gap-[1.5vh]' : `${card} gap-3 py-6 sm:py-8`
+          // TV: the hero is a size container, so the countdown fits whatever space is left
+          // (next to the hand rankings, under banners, on a 720p screen…). The floor stops it
+          // collapsing when an editor or banners take the height; main scrolls instead.
+          tv
+            ? 'min-h-[max(42vh,15rem)] min-w-0 flex-1 justify-center gap-[2vh] [container-type:size]'
+            : `${card} gap-3 py-6 sm:py-8`
         }`}
         aria-labelledby="clock-title"
       >
         <h1
           id="clock-title"
           className={`font-display font-bold leading-tight ${
-            tv ? 'text-[min(5vw,7vh)]' : 'text-[clamp(1.75rem,5vw,3.25rem)]'
+            tv ? 'text-[min(5cqw,9cqh)]' : 'text-[clamp(1.75rem,5vw,3.25rem)]'
           }`}
         >
           {title}
@@ -349,8 +360,8 @@ export function LiveClock({
           className={`font-clock font-semibold tabular-nums leading-[0.85] tracking-tight ${STATE_COLOUR[kind]} ${
             tv
               ? long
-                ? 'text-[min(20vw,32vh)]'
-                : 'text-[min(27vw,36vh)]'
+                ? 'text-[min(20cqw,44cqh)]'
+                : 'text-[min(27cqw,48cqh)]'
               : long
                 ? 'text-[clamp(4rem,17vw,10rem)]'
                 : 'text-[clamp(5.5rem,24vw,12rem)]'
@@ -374,7 +385,7 @@ export function LiveClock({
             <span className={eyebrow}>{t('clock.blinds')}</span>
             <p
               className={`font-clock font-semibold tabular-nums leading-none ${
-                tv ? 'text-[min(10vw,12vh)]' : 'text-[clamp(2.75rem,10vw,5.5rem)]'
+                tv ? 'text-[min(10cqw,15cqh)]' : 'text-[clamp(2.75rem,10vw,5.5rem)]'
               }`}
             >
               {formatBlinds(model.blinds.sb, model.blinds.bb)}
@@ -382,7 +393,7 @@ export function LiveClock({
           </div>
         )}
         {model.blinds && !view.inInterlude && model.blinds.ante > 0 && (
-          <p className={`font-clock font-medium text-ink-muted ${tv ? 'text-[min(3vw,4vh)]' : 'text-2xl'}`}>
+          <p className={`font-clock font-medium text-ink-muted ${tv ? 'text-[min(3cqw,5cqh)]' : 'text-2xl'}`}>
             {t('clock.ante', { ante: formatChips(model.blinds.ante) })}
           </p>
         )}
@@ -537,6 +548,15 @@ export function LiveClock({
               <Icon name="bell" className="size-4" />
               {t('clock.control.alerts')}
             </button>
+            <button
+              type="button"
+              className={`${buttonSecondary} aria-pressed:border-accent/60 aria-pressed:bg-accent/10 aria-pressed:text-accent-strong`}
+              aria-pressed={showReference}
+              onClick={() => void actions.setReference(!showReference)}
+            >
+              <Icon name="cards" className="size-4" />
+              {t('clock.control.reference')}
+            </button>
             <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
               <Icon name={fullscreen.active ? 'shrink' : 'expand'} className="size-4" />
               {t(fullscreen.active ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
@@ -568,6 +588,7 @@ export function LiveClock({
         now={now}
         controller={controller}
         tv={tv}
+        reference={withReference}
         onPlayers={(delta) => void actions.changePlayers(delta)}
       />
 
@@ -586,6 +607,9 @@ export function LiveClock({
             {t('clock.control.fullscreen')}
           </button>
         </div>
+      )}
+      {controller && !tv && showReference && (
+        <p className="text-center text-sm text-ink-muted">{t('clock.reference.hint')}</p>
       )}
       {controller && !tv && extras}
       {controller && !tv && <p className="hidden text-center text-sm text-ink-muted sm:block">{t('clock.shortcuts')}</p>}
@@ -616,6 +640,9 @@ export function LiveClock({
           onApply={actions.applyEdit}
           onClose={() => setEditing(false)}
         />
+      )}
+      {withReference && (
+        <HandRankings className="fixed inset-y-[3vh] right-[2vw] hidden w-[30%] text-[min(2.2vh,1.1vw)] lg:flex" />
       )}
     </main>
   );
@@ -665,10 +692,12 @@ interface DetailsProps {
   controller: boolean;
   /** Big-screen layout: one row of larger tiles. */
   tv: boolean;
+  /** The hand rankings take the right of the screen, so tiles get a little smaller. */
+  reference: boolean;
   onPlayers: (delta: number) => void;
 }
 
-function Details({ t, tournament, model, view, now, controller, tv, onPlayers }: DetailsProps) {
+function Details({ t, tournament, model, view, now, controller, tv, reference, onPlayers }: DetailsProps) {
   const { count, remaining } = tournament.participants;
   const next = model.next;
   const onBreak = model.segment.kind === 'break' || view.inInterlude;
@@ -676,7 +705,9 @@ function Details({ t, tournament, model, view, now, controller, tv, onPlayers }:
     <section aria-label={t('clock.details')}>
     <dl
       className={`grid gap-2 sm:gap-3 ${
-        tv ? 'grid-cols-2 md:grid-cols-5 [&_dd]:text-[min(2.6vw,4.5vh)]' : 'grid-cols-2 md:grid-cols-5'
+        tv
+          ? `grid-cols-2 md:grid-cols-5 ${reference ? '[&_dd]:text-[min(1.8vw,4vh)]' : '[&_dd]:text-[min(2.6vw,4.5vh)]'}`
+          : 'grid-cols-2 md:grid-cols-5'
       }`}
     >
       <Item term={t('clock.next')} wide>

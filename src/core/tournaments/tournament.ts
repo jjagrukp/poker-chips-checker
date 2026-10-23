@@ -9,6 +9,8 @@ const count = z.number().int().nonnegative();
 
 export const TournamentSettingsSchema = z.object({
   breakEndBehaviour: z.enum(['auto', 'waitForHost']),
+  /** Show the module's reference panel (Hold'em: hand rankings) beside a big-screen clock (D44). */
+  showReference: z.boolean().optional(),
 });
 export type TournamentSettings = z.infer<typeof TournamentSettingsSchema>;
 

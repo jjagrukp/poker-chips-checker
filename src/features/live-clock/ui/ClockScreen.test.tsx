@@ -173,6 +173,21 @@ describe('live clock screen', () => {
     expect(await screen.findByRole('heading', { name: "That's a wrap." })).toBeInTheDocument();
   });
 
+  it('toggles the hand rankings and says where they appear (spec 10)', async () => {
+    const { repos } = await open(activeFrom());
+    await screen.findByRole('timer');
+    const toggle = button('Hand rankings');
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(toggle);
+    await waitFor(() => expect(button('Hand rankings')).toHaveAttribute('aria-pressed', 'true'));
+    expect(screen.getByText(/Hand rankings show beside the clock on the TV/)).toBeInTheDocument();
+    // The phone's own view stays uncluttered: the panel is for big screens.
+    expect(screen.queryByRole('heading', { name: 'Hand rankings' })).not.toBeInTheDocument();
+    expect((await repos.tournaments.get('t1'))?.settings.showReference).toBe(true);
+    fireEvent.click(button('Hand rankings'));
+    await waitFor(() => expect(button('Hand rankings')).toHaveAttribute('aria-pressed', 'false'));
+  });
+
   it('is read-only in a viewer tab until it takes control', async () => {
     await open(activeFrom(), { role: 'viewer' });
     await screen.findByRole('timer');

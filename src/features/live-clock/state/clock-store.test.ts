@@ -146,6 +146,21 @@ describe('clock store', () => {
     expect(onSaved).toHaveBeenCalledTimes(1);
   });
 
+  it('saves the hand-rankings toggle on the tournament and reports it (spec 10)', async () => {
+    const { s, repos, platform } = await setup(activeFrom());
+    const onSaved = vi.fn();
+    platform.onSaved = onSaved;
+    await s().setReference(true);
+    expect(s().tournament?.settings.showReference).toBe(true);
+    expect((await repos.tournaments.get('t1'))?.settings.showReference).toBe(true);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    // No change, no write.
+    await s().setReference(true);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    await s().setReference(false);
+    expect((await repos.tournaments.get('t1'))?.settings.showReference).toBe(false);
+  });
+
   it('re-reads when the controller tab saves', async () => {
     const { s, repos, platform } = await setup(activeFrom(), { role: 'viewer' });
     const other = applyClockCommand(activeFrom(), holdemSchedule(), T0 + MINUTE, pause);

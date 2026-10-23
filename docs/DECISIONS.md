@@ -235,6 +235,12 @@ New dependencies: @fontsource-variable/bricolage-grotesque, @fontsource-variable
 requests, CSP unchanged). Icons are hand-written inline SVG (no icon library). Restyle keeps every
 accessible name and role, so existing tests stay the contract.
 
+D44 — Reference panel toggle lives on the tournament (spec 10)
+`TournamentSettings.showReference?: boolean` (additive, no version bump; generic so core stays
+game-agnostic). Per tournament rather than per device so the phone's toggle reaches viewer tabs and
+the shared TV through the normal commit → onSaved → snapshot path, with no extra sync channel. The
+Hold'em panel content is module data; the panel component lives with the live clock.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

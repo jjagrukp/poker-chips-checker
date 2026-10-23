@@ -85,6 +85,30 @@ describe('screen share', () => {
     await waitFor(() => expect(timer()).toHaveTextContent('08:59'));
   });
 
+  it('shows the hand rankings beside the clock only when the phone turned them on (spec 10)', async () => {
+    const tv = settableClock(T0);
+    const { client } = relay(tv.now);
+    const tournament = activeFrom();
+    const send = (showReference: boolean) =>
+      client().put(CODE, KEY, {
+        schemaVersion: SCREEN_SCHEMA_VERSION,
+        tournament: { ...tournament, settings: { ...tournament.settings, showReference } },
+        schedule: holdemSchedule(),
+        sentAt: T0 + (showReference ? 1 : 2),
+      });
+    await send(true);
+    renderScreen(client(tv.now), tv.now);
+    expect(await screen.findByRole('heading', { name: 'Hand rankings' })).toBeInTheDocument();
+    const hands = screen.getAllByRole('listitem').map((li) => li.textContent);
+    expect(hands[0]).toContain('Royal flush');
+    expect(hands[9]).toContain('High card');
+
+    await send(false);
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Hand rankings' })).not.toBeInTheDocument(),
+    );
+  });
+
   it('corrects for a TV clock that is a few minutes out', async () => {
     const phone = settableClock(T0);
     const tv = settableClock(T0 + 3 * MINUTE);

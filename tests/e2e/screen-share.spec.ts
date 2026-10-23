@@ -28,6 +28,18 @@ test('a TV follows the phone through a shared code', async ({ page, browser }) =
   await expect(tv.getByRole('button', { name: 'Pause' })).toHaveCount(0);
   await noAxeViolations(tv);
 
+  // Spec 10: the phone turns the hand rankings on and off beside the TV clock.
+  const rankings = page.getByRole('button', { name: 'Hand rankings' });
+  await rankings.click();
+  await expect(rankings).toHaveAttribute('aria-pressed', 'true');
+  await expect(tv.getByText('Royal flush')).toBeAttached();
+  if ((tv.viewportSize()?.width ?? 0) >= 1024) {
+    await expect(tv.getByRole('heading', { name: 'Hand rankings' })).toBeVisible();
+    await noAxeViolations(tv);
+  }
+  await rankings.click();
+  await expect(tv.getByText('Royal flush')).toHaveCount(0);
+
   await page.getByRole('button', { name: 'Pause' }).click();
   await expect(tv.getByText('Paused', { exact: true })).toBeVisible();
   await expect(tv.getByRole('timer', { name: 'Time left' })).toHaveText(

@@ -211,6 +211,7 @@ const NO_ACTIONS = {
   begin: done,
   end: done,
   changePlayers: done,
+  setReference: done,
   applyEdit: async () => 'failed' as const,
   recover: done,
   skewed: done,

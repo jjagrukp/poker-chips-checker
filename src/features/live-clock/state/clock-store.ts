@@ -76,6 +76,8 @@ export interface ClockStore {
   begin(): Promise<void>;
   end(): Promise<void>;
   changePlayers(delta: number): Promise<void>;
+  /** Shows or hides the reference panel (hand rankings) on big screens (D44). */
+  setReference(show: boolean): Promise<void>;
   applyEdit(edited: Schedule, options: EditOptions): Promise<EditOutcome>;
   /** Cold load and visibility regain share this path (spec 03 §4). */
   recover(): Promise<void>;
@@ -288,6 +290,18 @@ export function createClockStore({
           if (!current) return;
           const change = changeRemaining(current.tournament, delta, ctx.clock.now());
           if (change) await save(change);
+        }, undefined),
+
+      setReference: (show) =>
+        enqueue(async () => {
+          const current = writable('active');
+          if (!current || (current.tournament.settings.showReference ?? false) === show) return;
+          const tournament: Tournament = {
+            ...current.tournament,
+            settings: { ...current.tournament.settings, showReference: show },
+            updatedAt: ctx.clock.now(),
+          };
+          await save({ tournament, events: [] });
         }, undefined),
 
       applyEdit: (edited, options) =>
