@@ -31,7 +31,7 @@ const SWATCHES: Record<string, string> = {
   brown: '#6d4c41',
   beige: '#d7c4a3',
 };
-const UNKNOWN_SWATCH = '#808080';
+export const UNKNOWN_SWATCH = '#808080';
 
 /** Best-effort swatch from a colour name: the last known colour word wins ("light blue" → blue). */
 export function swatchFor(colour: string): string {

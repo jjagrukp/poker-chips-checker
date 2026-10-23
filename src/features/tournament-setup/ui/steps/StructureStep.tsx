@@ -5,7 +5,7 @@ import { formatBlinds, formatDurationMin } from '@/modules/texas-holdem/format';
 import type { Structure } from '@/modules/texas-holdem/presets';
 import { IssueList } from '@/shared/components/IssueList';
 import { NumberField } from '@/shared/components/NumberField';
-import { buttonSecondary, card, hint, input, label } from '@/shared/components/styles';
+import { buttonSecondary, card, hint, input, label, optionCard } from '@/shared/components/styles';
 import type { MessageKey } from '@/shared/messages';
 import { useT } from '@/shared/messages/tone';
 import {
@@ -69,14 +69,12 @@ export function StructureStep() {
   return (
     <section className="flex flex-col gap-5">
       <fieldset className="grid gap-2 sm:grid-cols-2">
-        <legend className="mb-2 font-semibold">{t('setup.structure.legend')}</legend>
+        <legend className="mb-2 text-lg font-semibold">{t('setup.structure.legend')}</legend>
         {STRUCTURES.map((s) => (
           <label
             key={s.id}
             htmlFor={`${ids.structure}-${s.id}`}
-            className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-xl px-4 py-3 ${
-              config.structure === s.id ? 'bg-accent text-accent-ink' : 'bg-surface-raised'
-            }`}
+            className={optionCard}
           >
             <input
               id={`${ids.structure}-${s.id}`}
@@ -86,8 +84,8 @@ export function StructureStep() {
               checked={config.structure === s.id}
               onChange={() => update((st) => setStructure(st, s.id))}
             />
-            <span className="flex flex-col">
-              <strong>{t(s.name)}</strong>
+            <span className="flex flex-col gap-0.5 text-sm text-ink-muted">
+              <strong className="font-display text-lg text-ink">{t(s.name)}</strong>
               {t(s.hint)}
             </span>
           </label>

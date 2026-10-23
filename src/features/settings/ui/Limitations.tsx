@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { buttonSecondary, card } from '@/shared/components/styles';
+import { buttonSecondary, card, pageTitle } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 
 // Known limitations (spec 07 §4): the list Settings shows, plus a standalone page at
@@ -35,7 +35,7 @@ export function LimitationsScreen({ appName }: { appName: string }) {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-4xl text-accent">{t('limitations.title')}</h1>
+        <h1 className={pageTitle}>{t('limitations.title')}</h1>
         <Link to="/" className={`${buttonSecondary} inline-flex items-center`}>
           {t('limitations.home')}
         </Link>

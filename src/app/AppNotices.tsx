@@ -28,7 +28,7 @@ export function AppNotices() {
             </button>
             <button
               type="button"
-              className={buttonSecondary + ' bg-surface'}
+              className={buttonSecondary}
               onClick={() => appStatus.set({ updateReady: false })}
             >
               {t('app.update.later')}

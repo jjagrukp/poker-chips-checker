@@ -1,16 +1,12 @@
 import type { DenominationAssignment, Inventory } from '@/features/chip-inventory/domain/inventory';
+import { Chip } from '@/shared/components/Chip';
+import { chipValueLabel } from '@/shared/components/chip-colour';
 import { useT } from '@/shared/messages/tone';
 
 const numberFormat = new Intl.NumberFormat('en-AU');
 
 export function Swatch({ colour }: { colour: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="inline-block h-5 w-5 shrink-0 rounded-full border-2 border-ink-muted"
-      style={{ backgroundColor: colour }}
-    />
-  );
+  return <Chip colour={colour} className="size-6" />;
 }
 
 interface Props {
@@ -33,7 +29,7 @@ export function ChipBreakdown({ inventory, assignment, perPlayer }: Props) {
     <ul className="flex flex-col gap-2">
       {lines.map(({ chip, count, value }) => (
         <li key={chip.id} className="flex items-center gap-3">
-          <Swatch colour={chip.swatch} />
+          <Chip colour={chip.swatch} value={chipValueLabel(value)} className="size-10" />
           <span>
             {t('chips.breakdown.line', {
               count,

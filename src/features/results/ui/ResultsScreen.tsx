@@ -8,7 +8,7 @@ import { createDraft } from '@/features/tournament-setup/state/create';
 import { duplicateOf, presetFromTournament } from '@/features/tournament-setup/state/reuse';
 import { loadInventory } from '@/features/tournament-setup/state/wizard';
 import { resumePath, setupPath } from '@/features/tournament-setup/ui/paths';
-import { buttonPrimary, buttonSecondary, card, hint, input, label } from '@/shared/components/styles';
+import { buttonPrimary, buttonSecondary, card, hint, input, label, pageTitle } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import {
   actualDuration,
@@ -123,7 +123,7 @@ export function ResultsScreen({ tournament: initial, repos, ctx }: Props) {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6">
       <header className="flex flex-col gap-2 text-center">
-        <h1 className="font-display text-4xl text-accent">
+        <h1 className={pageTitle}>
           {t(completed ? 'clock.finished.title' : 'clock.cancelled.title')}
         </h1>
         {tournament.name && <p className="text-lg">{tournament.name}</p>}
@@ -204,7 +204,7 @@ export function ResultsScreen({ tournament: initial, repos, ctx }: Props) {
             />
             <button
               type="button"
-              className={buttonSecondary + ' bg-surface'}
+              className={buttonSecondary}
               disabled={busy || presetName.trim() === ''}
               onClick={() => void savePreset()}
             >
@@ -214,11 +214,11 @@ export function ResultsScreen({ tournament: initial, repos, ctx }: Props) {
           <p className={hint}>{t('results.presetHint')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className={buttonSecondary + ' bg-surface'} disabled={busy} onClick={() => void duplicate()}>
+          <button type="button" className={buttonSecondary} disabled={busy} onClick={() => void duplicate()}>
             {t('results.duplicate')}
           </button>
           {tournament.inventoryId && (
-            <button type="button" className={buttonSecondary + ' bg-surface'} disabled={busy} onClick={() => void sameChips()}>
+            <button type="button" className={buttonSecondary} disabled={busy} onClick={() => void sameChips()}>
               {t('results.sameChips')}
             </button>
           )}

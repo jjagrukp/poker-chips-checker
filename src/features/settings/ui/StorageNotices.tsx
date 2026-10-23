@@ -3,7 +3,8 @@ import type { Repositories } from '@/core/persistence/repositories';
 import type { Clock } from '@/core/time';
 import type { DataTools } from '@/infrastructure/backup/data-tools';
 import { appStatus, useAppStatus, type AppStatusStore } from '@/infrastructure/pwa/app-status';
-import { buttonPrimary, buttonSecondary, card, hint } from '@/shared/components/styles';
+import { Icon } from '@/shared/components/Icon';
+import { buttonQuiet, buttonSecondary, card, hint } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import { datedFilename, downloadText } from '@/shared/utilities/download';
 
@@ -55,20 +56,29 @@ export function DurabilityNotice({
   };
 
   return (
-    <section aria-label={t('settings.data.heading')} className={`${card} flex flex-col gap-3 text-left`}>
-      <p>{t('storage.durability.notice')}</p>
+    <section
+      aria-label={t('settings.data.heading')}
+      className="flex flex-col gap-3 rounded-3xl border border-state-break/25 bg-state-break/[0.06] p-4 text-left text-sm sm:p-5"
+    >
+      <p className="flex gap-3">
+        <span aria-hidden="true" className="mt-0.5 text-state-break">
+          <Icon name="stack" />
+        </span>
+        <span>{t('storage.durability.notice')}</span>
+      </p>
       {!canInstall && <p className={hint}>{t('storage.durability.installHint')}</p>}
       {exportFailed && <p role="alert">{t('settings.data.exportFailed')}</p>}
       <div className="flex flex-wrap gap-2">
         {canInstall && (
-          <button type="button" className={buttonSecondary + ' bg-surface'} onClick={() => void status.install()}>
+          <button type="button" className={buttonSecondary} onClick={() => void status.install()}>
             {t('storage.durability.install')}
           </button>
         )}
-        <button type="button" className={buttonSecondary + ' bg-surface'} onClick={() => void exportAll()}>
+        <button type="button" className={buttonSecondary} onClick={() => void exportAll()}>
           {t('storage.durability.exportBackup')}
         </button>
-        <button type="button" className={buttonPrimary} onClick={dismiss}>
+        <button type="button" className={buttonQuiet} onClick={dismiss}>
+          <Icon name="check" className="size-4" />
           {t('storage.durability.dismiss')}
         </button>
       </div>
@@ -107,7 +117,7 @@ export function QuarantineNotice({ repos, data, clock }: NoticeProps) {
   }
 
   return (
-    <div role="status" className={`${card} flex flex-col gap-3 bg-surface text-left`}>
+    <div role="status" className={`${card} flex flex-col gap-3 border-state-warning/40 text-left`}>
       <p>{t('storage.quarantine.notice')}</p>
       {failed && <p role="alert">{t('settings.saveFailed')}</p>}
       <div className="flex flex-wrap gap-2">

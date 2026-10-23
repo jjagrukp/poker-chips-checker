@@ -1,10 +1,9 @@
 # Progress
 
 ## Current state
-Active milestone: none (M12 done; nothing further on the roadmap)
-Status: M12 committed. Host to run `npx wrangler d1 migrations apply tournament-rate-limits --remote`
-(0002_screens.sql) and redeploy, then try the TV item in docs/TEST-NIGHT.md.
-Last completed: M12
+Active milestone: none (M13 done; nothing further on the roadmap)
+Status: M13 committed. Host still to apply migration 0002 and redeploy for screen share (M12).
+Last completed: M13
 Open issues / follow-ups:
 - Screen share (D42): the TV uses default alert prefs and ignores the host's mute (mute lives in Settings,
   not the snapshot); GET `/api/screens/:code` has no rate limit (~43k D1 reads/day per TV, inside the free
@@ -39,3 +38,4 @@ M9 — 2026-10-23 — "M9: AI chip photo" — Web Fetch endpoint (size/magic-byt
 M10 — 2026-10-23 — "M10: hardening" — PWA offline shell, Settings (tone, alerts, break-end default, backup/import/delete all, storage status, limitations), durability/quarantine/update notices, CSP headers, focus fixes, e2e acceptance matrix on Chromium + WebKit
 M11 — 2026-10-23 — "M11: deploy" — Cloudflare Pages adapter (D1 atomic rate limiter, CF-Connecting-IP, /api headers + HSTS, JSON 404), wrangler.toml + migration, bundle-secret check, live API/burst check, /limitations page, DEPLOY + TEST-NIGHT docs (host still to deploy)
 M12 — 2026-10-23 — "M12: screen share" — phone as remote, TV as display: share code + link, latest-wins snapshot push after every commit (redacted: no inventory/names/results), /api/screens/:code relay on D1 (write key hashed, 24 h expiry, origin + per-IP write limit, 64 KB cap), /screen code entry + read-only TV clock with offset-corrected time, sound and wake lock, reconnecting/ended states; e2e phone → TV
+M13 — 2026-10-23 — "M13: visual design" — "Midnight card room" restyle: self-hosted Bricolage/Manrope/Barlow Condensed, new tokens + felt glow, Icon + Chip components, clock/TV hero + control dock + stat tiles, Home live card + chip-set fans, ready screen, wizard stepper + sticky nav, chip rows with live chip preview (swatch follows colour name), phone-fit schedule table, option cards, new brass icons; mute saved before shown (serialised)

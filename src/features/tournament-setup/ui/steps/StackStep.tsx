@@ -11,7 +11,7 @@ import { ChipBreakdown } from '@/features/chip-inventory/ui/ChipBreakdown';
 import { formatChips } from '@/modules/texas-holdem/format';
 import { IssueList } from '@/shared/components/IssueList';
 import { NumberField } from '@/shared/components/NumberField';
-import { buttonPrimary, buttonSecondary, card, hint } from '@/shared/components/styles';
+import { buttonPrimary, buttonSecondary, card, hint, optionCard } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import {
   acceptAllocation,
@@ -137,9 +137,7 @@ export function StackStep() {
         {(['recommended', 'custom'] as const).map((mode) => (
           <label
             key={mode}
-            className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-4 py-2 ${
-              draft.stackMode === mode ? 'bg-accent text-accent-ink' : 'bg-surface-raised'
-            }`}
+            className={`${optionCard} items-center font-semibold`}
           >
             <input
               type="radio"

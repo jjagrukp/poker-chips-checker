@@ -6,7 +6,8 @@ import { Library } from '@/features/library/ui/Library';
 import { DurabilityNotice, QuarantineNotice } from '@/features/settings/ui/StorageNotices';
 import { createDraft } from '@/features/tournament-setup/state/create';
 import { setupPath } from '@/features/tournament-setup/ui/paths';
-import { buttonPrimary, buttonSecondary } from '@/shared/components/styles';
+import { Icon } from '@/shared/components/Icon';
+import { buttonPrimary, buttonQuiet } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 
 export function Home() {
@@ -35,10 +36,20 @@ export function Home() {
   };
 
   return (
-    <main className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center">
-      <img src={brand.logo} alt="" width={96} height={96} />
-      <h1 className="font-display text-4xl text-accent sm:text-5xl">{brand.appName}</h1>
-      <p className="text-lg text-ink-muted">{brand.tagline}</p>
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <img src={brand.logo} alt="" width={48} height={48} className="drop-shadow-[0_6px_14px_rgba(242,193,78,0.35)]" />
+          <div className="text-left">
+            <h1 className="font-display text-2xl font-bold leading-tight sm:text-3xl">{brand.appName}</h1>
+            <p className="text-sm text-ink-muted">{brand.tagline}</p>
+          </div>
+        </div>
+        <Link to="/settings" className={`${buttonQuiet} shrink-0`}>
+          <Icon name="settings" />
+          <span className="sr-only sm:not-sr-only">{t('home.settings')}</span>
+        </Link>
+      </header>
       {deleted && <p role="status">{t('settings.data.deleteAll.done')}</p>}
       {data && (
         <>
@@ -53,20 +64,17 @@ export function Home() {
           <>
             <button
               type="button"
-              className={buttonPrimary + ' w-full'}
+              className={`${buttonPrimary} h-14 w-full text-lg`}
               disabled={creating}
               onClick={() => void create()}
             >
+              <Icon name="plus" />
               {t('home.newTournament')}
             </button>
             {failed && <p role="alert">{t('setup.saveFailed')}</p>}
           </>
         }
       />
-
-      <Link to="/settings" className={buttonSecondary + ' inline-flex w-full items-center justify-center'}>
-        {t('home.settings')}
-      </Link>
     </main>
   );
 }

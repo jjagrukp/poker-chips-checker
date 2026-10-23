@@ -11,7 +11,7 @@ import type { DataTools } from '@/infrastructure/backup/data-tools';
 import type { AlertNotifier } from '@/infrastructure/notifications/notifier';
 import { requestPersistentStorage } from '@/infrastructure/storage-durability/persistence';
 import { ConfirmAction } from '@/shared/components/ConfirmAction';
-import { buttonQuiet, buttonSecondary, card, hint, label } from '@/shared/components/styles';
+import { buttonQuiet, buttonSecondary, card, hint, label, pageTitle } from '@/shared/components/styles';
 import type { MessageKey, Tone } from '@/shared/messages';
 import { useT } from '@/shared/messages/tone';
 import { datedFilename, downloadText } from '@/shared/utilities/download';
@@ -141,7 +141,7 @@ export function SettingsScreen(props: Props) {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-4xl text-accent">{t('settings.title')}</h1>
+        <h1 className={pageTitle}>{t('settings.title')}</h1>
         <Link to="/" className={`${buttonSecondary} inline-flex items-center`}>
           {t('settings.home')}
         </Link>

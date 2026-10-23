@@ -111,6 +111,7 @@ export function createClockStore({
   platform,
 }: ClockDeps): StoreApi<ClockStore> {
   let chain: Promise<unknown> = Promise.resolve();
+  let muting: Promise<void> = Promise.resolve();
   let lock: ControllerLock | undefined;
   let channel: TournamentChannel | undefined;
 
@@ -339,10 +340,16 @@ export function createClockStore({
           if (saved && !get().warning) set({ warning: 'skew' });
         }, undefined),
 
-      async toggleMute() {
-        const muted = !get().muted;
-        set({ muted });
-        await repos.settings.update({ alertsMuted: muted }).catch(() => undefined);
+      toggleMute() {
+        // Presses run one after another, each flipping the value it finds. The save comes first,
+        // so a reload straight after a press can't bring the sound back; a failed save still
+        // mutes this session.
+        muting = muting.then(async () => {
+          const muted = !get().muted;
+          await repos.settings.update({ alertsMuted: muted }).catch(() => undefined);
+          set({ muted });
+        });
+        return muting;
       },
 
       async updateAlertPrefs(patch) {

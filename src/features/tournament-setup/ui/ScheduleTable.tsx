@@ -6,6 +6,7 @@ import type { HoldemConfig } from '@/modules/texas-holdem/config';
 import { HoldemEditError, insertBreak, removeBreak, setLevel } from '@/modules/texas-holdem/edits';
 import { formatBlinds, formatChips, formatDurationMin } from '@/modules/texas-holdem/format';
 import { levelData } from '@/modules/texas-holdem/generate';
+import { Icon } from '@/shared/components/Icon';
 import { buttonPrimary, buttonQuiet, input, label } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 
@@ -43,19 +44,21 @@ export function ScheduleTable({ schedule, editor, currentIndex }: Props) {
     }
   };
 
+  const cell = 'px-3 py-2.5 align-middle';
+  const wide = 'hidden sm:table-cell';
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-3xl border border-line bg-surface-raised/80">
       <table className="w-full border-collapse text-left text-sm">
         <caption className="sr-only">{t('schedule.heading')}</caption>
         <thead>
-          <tr className="border-b border-ink-muted/40">
-            <th scope="col" className="py-2 pr-2">{t('schedule.col.segment')}</th>
-            <th scope="col" className="py-2 pr-2">{t('schedule.col.blinds')}</th>
-            <th scope="col" className="py-2 pr-2">{t('schedule.col.ante')}</th>
-            <th scope="col" className="py-2 pr-2">{t('schedule.col.length')}</th>
-            <th scope="col" className="py-2 pr-2">{t('schedule.col.starts')}</th>
+          <tr className="border-b border-line text-xs uppercase tracking-[0.12em] text-ink-muted">
+            <th scope="col" className={cell}>{t('schedule.col.segment')}</th>
+            <th scope="col" className={cell}>{t('schedule.col.blinds')}</th>
+            <th scope="col" className={`${cell} ${wide}`}>{t('schedule.col.ante')}</th>
+            <th scope="col" className={cell}>{t('schedule.col.length')}</th>
+            <th scope="col" className={`${cell} ${wide}`}>{t('schedule.col.starts')}</th>
             {editor && (
-              <th scope="col" className="py-2">
+              <th scope="col" className={cell}>
                 <span className="sr-only">{t('schedule.col.actions')}</span>
               </th>
             )}
@@ -86,42 +89,58 @@ export function ScheduleTable({ schedule, editor, currentIndex }: Props) {
               <tr
                 key={segment.id}
                 aria-current={current ? 'step' : undefined}
-                className={`border-b border-ink-muted/20 ${segment.kind === 'break' ? 'text-state-break' : ''} ${current ? 'bg-surface-raised' : ''}`}
+                className={`border-b border-line last:border-0 ${
+                  segment.kind === 'break' ? 'bg-state-break/[0.07] text-state-break' : ''
+                } ${current ? 'bg-accent/10 shadow-[inset_3px_0_0_var(--color-accent)]' : ''}`}
               >
-                <th scope="row" className="py-2 pr-2 font-semibold">
-                  {segment.kind === 'level'
-                    ? t('holdem.segment.level', { number: segment.levelNumber ?? index + 1 })
-                    : t('holdem.segment.break')}
-                  {segment.estimatedFinish && (
-                    <span className="ml-2 rounded-full bg-state-completed px-2 py-0.5 text-xs text-accent-ink">
-                      {t('schedule.estimatedFinish')}
+                <th scope="row" className={`${cell} font-semibold`}>
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    {segment.kind === 'break' && <Icon name="coffee" className="size-4" />}
+                    {segment.kind === 'level'
+                      ? t('holdem.segment.level', { number: segment.levelNumber ?? index + 1 })
+                      : t('holdem.segment.break')}
+                    {segment.estimatedFinish && (
+                      <span className="rounded-full bg-state-completed px-2 py-0.5 text-xs text-accent-ink">
+                        {t('schedule.estimatedFinish')}
+                      </span>
+                    )}
+                  </span>
+                </th>
+                <td className={`${cell} font-clock text-base font-semibold whitespace-nowrap tabular-nums`}>
+                  {data ? formatBlinds(data.sb, data.bb) : ''}
+                  {data && data.ante > 0 && (
+                    <span className="block text-xs font-medium text-ink-muted sm:hidden">
+                      {t('clock.ante', { ante: formatChips(data.ante) })}
                     </span>
                   )}
-                </th>
-                <td className="py-2 pr-2">{data ? formatBlinds(data.sb, data.bb) : ''}</td>
-                <td className="py-2 pr-2">{data && data.ante > 0 ? formatChips(data.ante) : ''}</td>
-                <td className="py-2 pr-2">{formatDurationMin(segment.durationMs / MINUTE)}</td>
-                <td className="py-2 pr-2">{formatDurationMin(startsAt)}</td>
+                </td>
+                <td className={`${cell} ${wide} font-clock text-base tabular-nums`}>
+                  {data && data.ante > 0 ? formatChips(data.ante) : ''}
+                </td>
+                <td className={`${cell} tabular-nums`}>{formatDurationMin(segment.durationMs / MINUTE)}</td>
+                <td className={`${cell} ${wide} tabular-nums text-ink-muted`}>{formatDurationMin(startsAt)}</td>
                 {editor && (
-                  <td className="py-1">
-                    <div className="flex flex-wrap gap-1">
+                  <td className="px-2 py-1">
+                    <div className="flex justify-end gap-1">
                       {index < locked ? null : segment.kind === 'level' ? (
                         <>
                           <button
                             type="button"
-                            className={buttonQuiet}
+                            className={actionButton}
                             aria-label={t('schedule.editLevel', { number: segment.levelNumber ?? '' })}
+                            title={t('schedule.edit')}
                             onClick={() => setEditing(segment.id)}
                           >
-                            {t('schedule.edit')}
+                            <Icon name="edit" className="size-4" />
                           </button>
                           {canAddBreak && (
                             <button
                               type="button"
-                              className={buttonQuiet}
+                              className={actionButton}
                               aria-label={t('schedule.addBreakAfter', {
                                 number: segment.levelNumber ?? '',
                               })}
+                              title={t('schedule.addBreak')}
                               onClick={() =>
                                 apply(
                                   () =>
@@ -130,19 +149,21 @@ export function ScheduleTable({ schedule, editor, currentIndex }: Props) {
                                 )
                               }
                             >
-                              {t('schedule.addBreak')}
+                              <Icon name="coffee" className="size-4" />
                             </button>
                           )}
                         </>
                       ) : index === locked ? null : (
                         <button
                           type="button"
-                          className={buttonQuiet}
+                          className={actionButton}
+                          aria-label={t('schedule.removeBreak')}
+                          title={t('schedule.removeBreak')}
                           onClick={() =>
                             apply(() => removeBreak(schedule, editor.config, editor.ctx, index).schedule)
                           }
                         >
-                          {t('schedule.removeBreak')}
+                          <Icon name="trash" className="size-4" />
                         </button>
                       )}
                     </div>
@@ -156,6 +177,9 @@ export function ScheduleTable({ schedule, editor, currentIndex }: Props) {
     </div>
   );
 }
+
+const actionButton =
+  'inline-flex size-11 items-center justify-center rounded-full text-ink-muted transition hover:bg-white/10 hover:text-ink';
 
 interface EditProps {
   segment: Segment;
@@ -198,8 +222,8 @@ function LevelEditRow({ segment, onSave, onCancel }: EditProps) {
     </div>
   );
   return (
-    <tr className="border-b border-ink-muted/20">
-      <td colSpan={6} className="py-2">
+    <tr className="border-b border-line bg-surface-high/60">
+      <td colSpan={6} className="p-3">
         <fieldset className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <legend className="mb-1 font-semibold">
             {t('schedule.editLevel', { number: segment.levelNumber ?? '' })}

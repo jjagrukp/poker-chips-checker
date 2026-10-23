@@ -229,6 +229,12 @@ and fails behind many NATs). Opt-in only: the phone pushes its latest snapshot t
 so a sleeping phone doesn't stop it. Phone stays source of truth. 8-char code (~40 bits) typed on a TV
 remote; no QR (would be a new dependency, and TVs can't scan). Share keys live in localStorage.
 
+D43 — Visual design system (spec 09)
+New dependencies: @fontsource-variable/bricolage-grotesque, @fontsource-variable/manrope,
+@fontsource/barlow-condensed (OFL, self-hosted woff2 bundled by Vite: offline-safe, no third-party
+requests, CSP unchanged). Icons are hand-written inline SVG (no icon library). Restyle keeps every
+accessible name and role, so existing tests stay the contract.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

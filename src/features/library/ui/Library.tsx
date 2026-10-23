@@ -10,7 +10,9 @@ import { applyPreset, presetConfig } from '@/features/tournament-setup/state/reu
 import { loadInventory, type WizardState } from '@/features/tournament-setup/state/wizard';
 import { resumePath, setupPath, tournamentPath } from '@/features/tournament-setup/ui/paths';
 import { ConfirmAction } from '@/shared/components/ConfirmAction';
-import { buttonPrimary, buttonQuiet, buttonSecondary, card } from '@/shared/components/styles';
+import { Chip } from '@/shared/components/Chip';
+import { Icon } from '@/shared/components/Icon';
+import { buttonQuiet, buttonSecondary, card, eyebrow, pill } from '@/shared/components/styles';
 import { useT, type Translate } from '@/shared/messages/tone';
 
 // Home's saved things (spec 01 §5): resume the running tournament, open or delete saved
@@ -143,9 +145,23 @@ export function Library({ repos, ctx, newTournament }: Props) {
         <Link
           key={x.id}
           to={tournamentPath(x.id)}
-          className={`${buttonPrimary} flex flex-col items-center gap-1 py-4 text-center text-xl`}
+          className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-3xl border border-state-level/30 bg-linear-to-br from-felt to-surface-raised p-5 shadow-[var(--shadow-card)] transition hover:border-state-level/60"
         >
-          <span>{t('home.resume', { name: untitled(x) })}</span>
+          <span className="flex min-w-0 flex-col gap-1">
+            <span aria-hidden="true" className={`${pill} w-fit text-state-level`}>
+              <span className="size-2 rounded-full bg-state-level motion-safe:animate-pulse" />
+              {t('home.live')}
+            </span>
+            <span className="font-display text-2xl leading-tight font-bold break-words">
+              {t('home.resume', { name: untitled(x) })}
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink transition group-hover:scale-105"
+          >
+            <Icon name="play" className="size-6" />
+          </span>
         </Link>
       ))}
 
@@ -160,13 +176,14 @@ export function Library({ repos, ctx, newTournament }: Props) {
                 key={x.id}
                 name={untitled(x)}
                 detail={t(`home.status.${x.status}`)}
+                tone={STATUS_TONE[x.status]}
                 confirm={confirmRow(`t:${x.id}`, untitled(x), () =>
                   void remove(() => repos.tournaments.delete(x.id)),
                 )}
               >
                 <Link
                   to={x.status === 'draft' ? resumePath(x.id) : tournamentPath(x.id)}
-                  className={buttonSecondary + ' inline-flex items-center bg-surface'}
+                  className={buttonSecondary}
                   aria-label={t('home.itemAction', { action, name: untitled(x) })}
                 >
                   {action}
@@ -188,7 +205,7 @@ export function Library({ repos, ctx, newTournament }: Props) {
             >
               <button
                 type="button"
-                className={buttonSecondary + ' bg-surface'}
+                className={buttonSecondary}
                 disabled={busy}
                 aria-label={t('home.itemAction', { action: t('home.usePreset'), name: p.name })}
                 onClick={() => startFromPreset(p)}
@@ -208,13 +225,20 @@ export function Library({ repos, ctx, newTournament }: Props) {
               key={inv.id}
               name={inv.name}
               detail={t('home.inventoryTypes', { types: inv.chipTypes.length })}
+              lead={
+                <span aria-hidden="true" className="flex -space-x-4">
+                  {inv.chipTypes.slice(0, 6).map((chip) => (
+                    <Chip key={chip.id} colour={chip.swatch} className="size-9" />
+                  ))}
+                </span>
+              }
               confirm={confirmRow(`i:${inv.id}`, inv.name, () =>
                 void remove(() => repos.inventories.delete(inv.id)),
               )}
             >
               <button
                 type="button"
-                className={buttonSecondary + ' bg-surface'}
+                className={buttonSecondary}
                 disabled={busy}
                 aria-label={t('home.itemAction', { action: t('home.useInventory'), name: inv.name })}
                 onClick={() => void startFrom((s) => loadInventory(s, inv))}
@@ -242,11 +266,19 @@ function linkAction(t: Translate, x: Tournament): string {
   }
 }
 
+const STATUS_TONE: Record<Tournament['status'], string> = {
+  draft: 'text-ink-muted',
+  ready: 'text-accent',
+  active: 'text-state-level',
+  completed: 'text-state-completed',
+  cancelled: 'text-ink-muted',
+};
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   const id = useId();
   return (
-    <section className="flex flex-col gap-2" aria-labelledby={id}>
-      <h2 id={id} className="text-xl font-semibold">
+    <section className="flex flex-col gap-3" aria-labelledby={id}>
+      <h2 id={id} className={eyebrow}>
         {title}
       </h2>
       <ul className="flex flex-col gap-2">{children}</ul>
@@ -257,20 +289,29 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function Item({
   name,
   detail,
+  tone,
+  lead,
   confirm,
   children,
 }: {
   name: string;
   detail?: string;
+  /** Text colour for the status detail. */
+  tone?: string;
+  /** Visual before the name (a chip fan). */
+  lead?: ReactNode;
   confirm: ReactNode;
   children: ReactNode;
 }) {
   return (
     <li className={`${card} flex flex-col gap-3`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span>
-          <span className="block font-semibold">{name}</span>
-          {detail && <span className="text-sm text-ink-muted">{detail}</span>}
+        <span className="flex min-w-0 items-center gap-4">
+          {lead}
+          <span className="min-w-0">
+            <span className="block truncate font-display text-lg font-semibold">{name}</span>
+            {detail && <span className={`text-sm font-semibold ${tone ?? 'text-ink-muted'}`}>{detail}</span>}
+          </span>
         </span>
         <span className="flex flex-wrap items-center gap-2">{children}</span>
       </div>

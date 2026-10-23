@@ -18,6 +18,7 @@ Persistence moved earlier than the original plan because timer recovery depends 
 | M10 | Hardening | 07 | PWA offline shell, full e2e matrix, axe checks, responsive review, security/privacy review, all acceptance criteria in 07 §3 green. |
 | M11 | Deploy | 06 §5, 07 §4 | Hosted, env vars set, rate limits verified, known-limitations page, real poker-night test checklist written. |
 | M12 | Screen share | 08 | Phone as remote, TV as display: share code + link, snapshot push on every commit, `/api/screens/:code` relay (D1, 24 h expiry, write key), `/screen` code entry + live read-only TV view with offset-corrected time, reconnecting/ended states, e2e phone → TV. |
+| M13 | Visual design | 09 | "Midnight card room" restyle: fonts, tokens, Icon + Chip components, clock/TV, home/library/ready/results, wizard (stepper, sticky nav, phone schedule cards), settings/share/photo; tests green, no 375 px overflow. |
 
 Recommended model per milestone (main session): Opus for M1, M3, M4, M6 (design-heavy,
 use plan mode first); Sonnet for everything else.

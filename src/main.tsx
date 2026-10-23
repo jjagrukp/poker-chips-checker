@@ -3,6 +3,12 @@ import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from '@/app/App';
 import { appStatus } from '@/infrastructure/pwa/app-status';
+// Self-hosted fonts (D43): bundled with the app, so they work offline and need no third party.
+import '@fontsource-variable/bricolage-grotesque/wght.css';
+import '@fontsource-variable/manrope/wght.css';
+import '@fontsource/barlow-condensed/500.css';
+import '@fontsource/barlow-condensed/600.css';
+import '@fontsource/barlow-condensed/700.css';
 import './index.css';
 
 const root = document.getElementById('root');

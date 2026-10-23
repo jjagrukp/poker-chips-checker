@@ -210,6 +210,21 @@ describe('clock store', () => {
     expect(platform.lock.released).toBe(true);
   });
 
+  it('applies two quick mute presses in order, saving before showing each', async () => {
+    const { s, repos } = await setup(readyTournament());
+    const first = s().toggleMute();
+    const second = s().toggleMute();
+    await Promise.all([first, second]);
+    expect(s().muted).toBe(false);
+    expect((await repos.settings.get()).alertsMuted).toBe(false);
+
+    const third = s().toggleMute();
+    expect(s().muted).toBe(false);
+    await third;
+    expect(s().muted).toBe(true);
+    expect((await repos.settings.get()).alertsMuted).toBe(true);
+  });
+
   it('saves alert preferences and loads them next time', async () => {
     const { s, repos, dispose } = await setup(readyTournament());
     await s().updateAlertPrefs({ volume: 0.5 });

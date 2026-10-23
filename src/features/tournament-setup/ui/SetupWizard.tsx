@@ -5,7 +5,8 @@ import type { ModuleContext } from '@/core/modules/contract';
 import type { Repositories } from '@/core/persistence/repositories';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
 import type { PhotoService } from '@/features/chip-inventory/photo/service';
-import { buttonPrimary, buttonSecondary } from '@/shared/components/styles';
+import { Icon } from '@/shared/components/Icon';
+import { buttonPrimary, buttonSecondary, eyebrow, pageTitle } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
 import { createWizardStore, type WizardStore } from '../state/store';
 import { fromTournament, reachStep, stepComplete, STEPS, type StepId } from '../state/wizard';
@@ -120,42 +121,63 @@ function Wizard({ env, step }: { env: WizardEnv; step: string | undefined }) {
 
   return (
     <WizardContext.Provider value={env}>
-      <main className="mx-auto flex max-w-3xl flex-col gap-6">
-        <header className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm text-ink-muted">
-              {t('setup.stepOf', { n: index + 1, total: STEPS.length })}
-            </p>
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+        <header className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className={eyebrow}>{t('setup.stepOf', { n: index + 1, total: STEPS.length })}</p>
             {saveStatus === 'error' ? (
-              <p role="alert" className="text-sm text-accent">
+              <p role="alert" className="text-sm font-semibold text-danger">
                 {t('setup.saveFailed')}
               </p>
             ) : (
-              <p className="text-sm text-ink-muted">
+              <p className="flex items-center gap-1.5 text-sm text-ink-muted">
+                <span
+                  aria-hidden="true"
+                  className={`size-1.5 rounded-full ${saveStatus === 'saving' ? 'bg-accent motion-safe:animate-pulse' : 'bg-state-level'}`}
+                />
                 {saveStatus === 'saving' ? t('setup.saving') : t('setup.saved')}
               </p>
             )}
           </div>
+          <div aria-hidden="true" className="flex gap-1.5">
+            {STEPS.map((s, i) => (
+              <span
+                key={s}
+                className={`h-1.5 flex-1 rounded-full ${
+                  i <= index ? 'bg-accent' : i <= wizard.draft.furthestStep ? 'bg-accent/35' : 'bg-white/10'
+                }`}
+              />
+            ))}
+          </div>
           <nav aria-label={t('setup.progress')}>
-            <ol className="flex flex-wrap gap-2">
+            <ol className="flex flex-wrap gap-1.5">
               {STEPS.map((s, i) => {
                 const reachable = i <= wizard.draft.furthestStep;
                 const label = t(STEP_LABELS[s]);
+                const current = i === index;
+                const text = (
+                  <>
+                    <span>{i + 1}.</span>{' '}
+                    <span className={current ? '' : 'sr-only sm:not-sr-only'}>{label}</span>
+                  </>
+                );
                 return (
                   <li key={s}>
                     {reachable ? (
                       <Link
                         to={setupPath(id, s)}
-                        aria-current={i === index ? 'step' : undefined}
-                        className={`inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold ${
-                          i === index ? 'bg-accent text-accent-ink' : 'bg-surface-raised text-ink'
+                        aria-current={current ? 'step' : undefined}
+                        className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full border px-3 text-sm font-semibold ${
+                          current
+                            ? 'border-accent bg-accent text-accent-ink'
+                            : 'border-line bg-surface-high text-ink hover:border-ink-muted/40'
                         }`}
                       >
-                        {i + 1}. {label}
+                        {text}
                       </Link>
                     ) : (
-                      <span className="inline-flex min-h-11 items-center rounded-full px-3 text-sm text-ink-muted">
-                        {i + 1}. {label}
+                      <span className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full border border-dashed border-line px-3 text-sm text-ink-muted">
+                        {text}
                       </span>
                     )}
                   </li>
@@ -163,31 +185,34 @@ function Wizard({ env, step }: { env: WizardEnv; step: string | undefined }) {
               })}
             </ol>
           </nav>
-          <h1 ref={heading} tabIndex={-1} className="font-display text-3xl text-accent">
+          <h1 ref={heading} tabIndex={-1} className={`${pageTitle} outline-none`}>
             {t(STEP_LABELS[current])}
           </h1>
         </header>
 
         <Step />
 
-        <footer className="flex justify-between gap-3">
+        <footer className="sticky bottom-0 z-10 -mx-4 flex justify-between gap-3 border-t border-line bg-surface/85 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
           {index > 0 ? (
             <button type="button" className={buttonSecondary} onClick={() => go(index - 1)}>
+              <Icon name="chevronLeft" className="size-4" />
               {t('setup.back')}
             </button>
           ) : (
-            <Link to="/" className={buttonSecondary + ' inline-flex items-center'}>
+            <Link to="/" className={buttonSecondary}>
+              <Icon name="home" className="size-4" />
               {t('setup.home')}
             </Link>
           )}
           {!isLast && (
             <button
               type="button"
-              className={buttonPrimary}
+              className={`${buttonPrimary} min-w-32`}
               disabled={!complete[index]}
               onClick={() => go(index + 1)}
             >
               {t('setup.next')}
+              <Icon name="chevronRight" className="size-4" />
             </button>
           )}
         </footer>

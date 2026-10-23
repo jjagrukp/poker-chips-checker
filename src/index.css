@@ -1,29 +1,40 @@
 @import 'tailwindcss';
 
 /*
- * Theme tokens. Components use these via Tailwind utilities (bg-surface, text-state-break…)
- * or var(--color-*). Swap values here to re-theme the app (brand.themeId reserved for later themes).
+ * Theme tokens ("Midnight card room", spec 09). Components use these via Tailwind utilities
+ * (bg-surface, text-state-break…) or var(--color-*). Swap values here to re-theme the app.
  * Text/background pairs are chosen for ≥ 4.5:1 contrast.
  */
 @theme {
-  --font-display: 'Arial Black', 'Helvetica Neue', system-ui, sans-serif;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Manrope Variable', system-ui, sans-serif;
+  --font-sans: 'Manrope Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Clock and big numbers: condensed, tabular, readable across a room. */
+  --font-clock: 'Barlow Condensed', 'Manrope Variable', system-ui, sans-serif;
 
-  --color-surface: #14122b;
-  --color-surface-raised: #221f45;
-  --color-ink: #f7f5ff;
-  --color-ink-muted: #c4bfe6;
-  --color-accent: #ff5d73;
-  --color-accent-ink: #14122b;
-  --color-focus: #ffd23f;
+  --color-surface: #0b0d17;
+  --color-surface-raised: #151a2b;
+  --color-surface-high: #1e2540;
+  --color-line: #ffffff1a;
+  --color-ink: #f4f1ea;
+  --color-ink-muted: #a9adc4;
+  /* Brass: the things you press. */
+  --color-accent: #f2c14e;
+  --color-accent-strong: #ffd56b;
+  --color-accent-ink: #1a1406;
+  --color-felt: #0f3d2e;
+  --color-danger: #ff6b6b;
+  --color-focus: #8ab4ff;
 
   /* Clock states (01 §4). Always paired with a text label/icon, never colour alone. */
   --color-state-level: #3ddc97;
-  --color-state-warning: #ffd23f;
+  --color-state-warning: #ffb020;
   --color-state-break: #4cc9f0;
   --color-state-paused: #b8b3d9;
   --color-state-overtime: #ff8c42;
   --color-state-completed: #c77dff;
+
+  --shadow-card: 0 1px 0 0 #ffffff0d inset, 0 18px 40px -24px #000000cc;
+  --shadow-press: 0 10px 24px -12px #f2c14e80;
 
   /* Optional alert flash (spec 03 §6.2); never shown under reduced motion. */
   --animate-alert-flash: alert-flash 0.8s ease-out forwards;
@@ -35,6 +46,17 @@
       opacity: 0;
     }
   }
+  --animate-rise: rise 0.25s ease-out both;
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
 @layer base {
@@ -43,14 +65,35 @@
   }
 
   body {
+    min-height: 100dvh;
     background-color: var(--color-surface);
+    /* One warm lamp over the table: a felt glow from above and a soft vignette. */
+    background-image:
+      radial-gradient(120% 60% at 50% -10%, #0f3d2e8c 0%, transparent 60%),
+      radial-gradient(80% 50% at 50% 120%, #2a1f4a59 0%, transparent 70%);
+    background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
   }
 
   :focus-visible {
     outline: 3px solid var(--color-focus);
     outline-offset: 2px;
+  }
+
+  ::selection {
+    background: #f2c14e55;
   }
 }
 

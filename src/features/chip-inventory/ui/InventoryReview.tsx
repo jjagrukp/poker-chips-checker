@@ -1,7 +1,11 @@
 import { useId } from 'react';
 import type { ValidationReport } from '@/core/validation/report';
+import { Chip } from '@/shared/components/Chip';
+import { chipValueLabel } from '@/shared/components/chip-colour';
+import { Icon } from '@/shared/components/Icon';
 import { IssueList } from '@/shared/components/IssueList';
 import {
+  buttonIcon,
   buttonPrimary,
   buttonQuiet,
   buttonSecondary,
@@ -11,7 +15,7 @@ import {
   label,
 } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
-import { newRow, type ChipRow } from './rows';
+import { colourChange, newRow, type ChipRow } from './rows';
 
 // Inventory review (spec 05 §2), shared by the manual, saved and (M9) photo routes.
 
@@ -38,7 +42,7 @@ export function InventoryReview(props: Props) {
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby={`${nameId}-heading`}>
-      <h2 id={`${nameId}-heading`} className="text-xl font-semibold">
+      <h2 id={`${nameId}-heading`} className="text-2xl font-semibold">
         {t('inventory.review.title')}
       </h2>
       <div className="flex flex-col gap-1">
@@ -77,6 +81,7 @@ export function InventoryReview(props: Props) {
           className={buttonSecondary}
           onClick={() => onRowsChange([...rows, newRow(props.newId())])}
         >
+          <Icon name="plus" className="size-4" />
           {t('inventory.addRow')}
         </button>
         {anyBlankValue && (
@@ -89,7 +94,8 @@ export function InventoryReview(props: Props) {
 
       <IssueList issues={report.errors} kind="error" />
       {confirmed ? (
-        <p role="status" className="font-semibold text-state-level">
+        <p role="status" className="flex items-center gap-2 font-semibold text-state-level">
+          <Icon name="check" />
           {t('inventory.confirmed')}
         </p>
       ) : (
@@ -121,27 +127,19 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
   const quantity = /^\d+$/.test(row.quantityText.trim()) ? Number(row.quantityText) : 0;
   const bump = (delta: number) =>
     onChange({ quantityText: String(Math.max(0, quantity + delta)), checkCount: false });
-  const stepButton = 'min-h-11 min-w-11 rounded-lg bg-surface text-xl font-bold';
-
+  const value = /^\d+$/.test(row.valueText.trim()) ? Number(row.valueText) : undefined;
   return (
     <li
-      className={`${card} grid gap-3 sm:grid-cols-2 ${row.confirmed ? '' : 'outline-2 outline-dashed outline-state-warning'}`}
+      className={`${card} flex flex-col gap-4 ${row.confirmed ? '' : 'border-dashed border-state-warning/70'} ${row.used ? '' : 'opacity-70'}`}
       aria-label={t('inventory.rowLabel', { name })}
     >
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={`${id}-swatch`} className={label}>
-            {t('inventory.row.swatch')}
-          </label>
-          <input
-            id={`${id}-swatch`}
-            type="color"
-            className="h-11 w-14 rounded-lg bg-surface"
-            value={row.swatch}
-            onChange={(e) => onChange({ swatch: e.target.value })}
-          />
-        </div>
-        <div className="flex flex-1 flex-col gap-1">
+      <div className="flex items-center gap-3">
+        <Chip
+          colour={row.swatch}
+          value={row.used && value ? chipValueLabel(value) : undefined}
+          className="size-14 sm:size-16"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <label htmlFor={`${id}-colour`} className={label}>
             {t('inventory.row.colour')}
           </label>
@@ -150,81 +148,95 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
             className={input}
             value={row.colour}
             maxLength={30}
-            onChange={(e) => onChange({ colour: e.target.value })}
+            onChange={(e) => onChange(colourChange(row, e.target.value))}
           />
         </div>
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor={`${id}-description`} className={label}>
-          {t('inventory.row.description')}
-        </label>
-        <input
-          id={`${id}-description`}
-          className={input}
-          value={row.description ?? ''}
-          maxLength={60}
-          onChange={(e) => onChange({ description: e.target.value })}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor={`${id}-quantity`} className={label}>
-          {t('inventory.row.quantity')}
-        </label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className={stepButton}
-            aria-label={t('inventory.row.decrease', { name })}
-            onClick={() => bump(-1)}
-          >
-            −
-          </button>
+        <div className="flex flex-col items-center gap-1">
+          <label htmlFor={`${id}-swatch`} className={`${label} text-xs`}>
+            {t('inventory.row.swatch')}
+          </label>
           <input
-            id={`${id}-quantity`}
-            className={input}
-            inputMode="numeric"
-            aria-invalid={invalid.quantity}
-            aria-describedby={row.checkCount ? `${id}-check` : undefined}
-            value={row.quantityText}
-            onChange={(e) => onChange({ quantityText: e.target.value, checkCount: false })}
+            id={`${id}-swatch`}
+            type="color"
+            className="size-11 cursor-pointer rounded-full border border-ink-muted/40 bg-surface-high p-1 [&::-moz-color-swatch]:rounded-full [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
+            value={row.swatch}
+            onChange={(e) => onChange({ swatch: e.target.value, swatchPicked: true })}
           />
-          <button
-            type="button"
-            className={stepButton}
-            aria-label={t('inventory.row.increase', { name })}
-            onClick={() => bump(1)}
-          >
-            +
-          </button>
         </div>
-        {row.checkCount && (
-          <p id={`${id}-check`} className="text-sm font-semibold text-state-warning">
-            {t('inventory.row.checkCount')}
-          </p>
-        )}
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor={`${id}-value`} className={label}>
-          {t('inventory.row.value')}
-        </label>
-        <input
-          id={`${id}-value`}
-          className={input}
-          inputMode="numeric"
-          disabled={!row.used}
-          aria-invalid={invalid.value}
-          value={row.used ? row.valueText : ''}
-          onChange={(e) => onChange({ valueText: e.target.value })}
-        />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1">
+          <label htmlFor={`${id}-quantity`} className={label}>
+            {t('inventory.row.quantity')}
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={buttonIcon}
+              aria-label={t('inventory.row.decrease', { name })}
+              onClick={() => bump(-1)}
+            >
+              <Icon name="minus" />
+            </button>
+            <input
+              id={`${id}-quantity`}
+              className={`${input} text-center font-clock text-xl font-semibold tabular-nums`}
+              inputMode="numeric"
+              aria-invalid={invalid.quantity}
+              aria-describedby={row.checkCount ? `${id}-check` : undefined}
+              value={row.quantityText}
+              onChange={(e) => onChange({ quantityText: e.target.value, checkCount: false })}
+            />
+            <button
+              type="button"
+              className={buttonIcon}
+              aria-label={t('inventory.row.increase', { name })}
+              onClick={() => bump(1)}
+            >
+              <Icon name="plus" />
+            </button>
+          </div>
+          {row.checkCount && (
+            <p id={`${id}-check`} className="text-sm font-semibold text-state-warning">
+              {t('inventory.row.checkCount')}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor={`${id}-value`} className={label}>
+            {t('inventory.row.value')}
+          </label>
+          <input
+            id={`${id}-value`}
+            className={`${input} font-clock text-xl font-semibold tabular-nums`}
+            inputMode="numeric"
+            disabled={!row.used}
+            aria-invalid={invalid.value}
+            value={row.used ? row.valueText : ''}
+            onChange={(e) => onChange({ valueText: e.target.value })}
+          />
+        </div>
+        <div className="flex flex-col gap-1 sm:col-span-2">
+          <label htmlFor={`${id}-description`} className={label}>
+            {t('inventory.row.description')}
+          </label>
+          <input
+            id={`${id}-description`}
+            className={input}
+            value={row.description ?? ''}
+            maxLength={60}
+            onChange={(e) => onChange({ description: e.target.value })}
+          />
+        </div>
       </div>
       {!row.confirmed && row.notes && (
-        <p className={`${hint} sm:col-span-2`}>{t('inventory.row.aiNote', { note: row.notes })}</p>
+        <p className={hint}>{t('inventory.row.aiNote', { note: row.notes })}</p>
       )}
-      <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-        <label className="flex min-h-11 items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+        <label className="flex min-h-11 items-center gap-2 font-semibold">
           <input
             type="checkbox"
-            className="h-5 w-5"
+            className="size-5 accent-accent"
             checked={row.used}
             onChange={(e) => onChange({ used: e.target.checked })}
           />
@@ -236,10 +248,12 @@ function ChipRowEditor({ row, index, invalid, onChange, onDelete }: RowProps) {
             className={buttonSecondary}
             onClick={() => onChange({ confirmed: true, checkCount: false })}
           >
+            <Icon name="check" className="size-4" />
             {t('inventory.row.confirm', { name })}
           </button>
         )}
-        <button type="button" className={`${buttonQuiet} ml-auto`} onClick={onDelete}>
+        <button type="button" className={`${buttonQuiet} ml-auto text-ink-muted`} onClick={onDelete}>
+          <Icon name="trash" className="size-4" />
           {t('inventory.row.delete', { name })}
         </button>
       </div>

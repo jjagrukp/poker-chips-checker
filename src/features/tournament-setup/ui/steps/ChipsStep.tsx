@@ -70,7 +70,7 @@ export function ChipsStep() {
               <li key={inventory.id}>
                 <button
                   type="button"
-                  className={buttonSecondary + ' bg-surface'}
+                  className={buttonSecondary}
                   aria-pressed={inventory.id === draft.inventoryId}
                   onClick={() => update((s) => loadInventory(s, inventory))}
                 >

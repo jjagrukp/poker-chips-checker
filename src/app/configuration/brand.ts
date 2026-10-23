@@ -17,5 +17,5 @@ export const brand: Brand = {
   tagline: 'Blinds, breaks and bragging rights, sorted.',
   logo: '/logo.svg',
   themeId: 'default',
-  themeColour: '#14122b',
+  themeColour: '#0b0d17',
 };

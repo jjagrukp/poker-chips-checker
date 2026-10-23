@@ -23,6 +23,7 @@ export const messages = {
   'home.status.completed': 'Finished',
   'home.status.cancelled': 'Cancelled',
   'home.resume': 'Resume {name}',
+  'home.live': 'Live now',
   'home.results': 'Results',
   'home.delete': 'Delete',
   'home.delete.confirm': "Delete {name}? This can't be undone.",
@@ -464,6 +465,7 @@ export const messages = {
 
   'clock.adhocBreak': 'Break',
   'clock.timeLeft': 'Time left',
+  'clock.blinds': 'Blinds',
   'clock.ante': 'Ante {ante}',
   'clock.thenLevel': 'Then {label}: {blinds}, {time} left',
   'clock.next': 'Next',

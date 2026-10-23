@@ -24,7 +24,7 @@ export function ConfirmAction({ text, confirmLabel, cancelLabel, onConfirm, onCa
         </button>
         <button
           type="button"
-          className={buttonSecondary + ' bg-surface'}
+          className={buttonSecondary}
           ref={cancel}
           onClick={onCancel}
         >

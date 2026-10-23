@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ValidationReport } from '@/core/validation/report';
 import { suggestDenominations } from '@/features/chip-inventory/domain/denominations';
+import { swatchFor, UNKNOWN_SWATCH } from '@/features/chip-inventory/photo/to-rows';
 import {
   INVENTORY_SCHEMA_VERSION,
   validateInventory,
@@ -25,6 +26,8 @@ export const ChipRowSchema = z.object({
   notes: z.string().optional(),
   /** Quantity was estimated from a photo: show "check this" until the host edits or confirms it. */
   checkCount: z.boolean().optional(),
+  /** The swatch was chosen (picker or a saved set), so typing the colour name leaves it alone. */
+  swatchPicked: z.boolean().optional(),
 });
 export type ChipRow = z.infer<typeof ChipRowSchema>;
 
@@ -35,11 +38,24 @@ function parseWhole(text: string): number {
   return WHOLE.test(trimmed) ? Number(trimmed) : NaN;
 }
 
+/** A new row's swatch, until a colour name or the picker changes it. */
+export const DEFAULT_SWATCH = '#ffffff';
+
+/**
+ * Typing a colour name: an unpicked swatch follows it ("Red" → red). Names it doesn't know
+ * ("Re", "Bluee") keep the last swatch, so a half-typed word never flashes grey.
+ */
+export function colourChange(row: ChipRow, colour: string): Partial<ChipRow> {
+  const derived = swatchFor(colour);
+  if (row.swatchPicked || derived === UNKNOWN_SWATCH) return { colour };
+  return { colour, swatch: derived };
+}
+
 export function newRow(id: string): ChipRow {
   return {
     id,
     colour: '',
-    swatch: '#ffffff',
+    swatch: DEFAULT_SWATCH,
     quantityText: '',
     valueText: '',
     used: true,
@@ -53,6 +69,7 @@ export function rowsFromInventory(inventory: Inventory): ChipRow[] {
     id: chip.id,
     colour: chip.colour,
     swatch: chip.swatch,
+    swatchPicked: true,
     ...(chip.description !== undefined ? { description: chip.description } : {}),
     quantityText: String(chip.quantity),
     valueText: chip.printedValue !== undefined ? String(chip.printedValue) : '',

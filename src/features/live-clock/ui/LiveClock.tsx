@@ -25,7 +25,16 @@ import type { HoldemConfig } from '@/modules/texas-holdem/config';
 import { extend, type EditResult } from '@/modules/texas-holdem/edits';
 import { formatBlinds, formatChips, formatDurationMin } from '@/modules/texas-holdem/format';
 import { levelData } from '@/modules/texas-holdem/generate';
-import { buttonPrimary, buttonQuiet, buttonSecondary, card } from '@/shared/components/styles';
+import { Icon } from '@/shared/components/Icon';
+import {
+  buttonPrimary,
+  buttonQuiet,
+  buttonSecondary,
+  buttonIcon,
+  card,
+  eyebrow,
+  pill,
+} from '@/shared/components/styles';
 import { useT, type Translate } from '@/shared/messages/tone';
 import {
   clockScreen,
@@ -63,6 +72,21 @@ const STATE_COLOUR: Record<StateKind, string> = {
   awaitingHost: 'text-state-warning',
   overtime: 'text-state-overtime',
 };
+
+const STATE_BG: Record<StateKind, string> = {
+  idle: 'bg-state-paused',
+  running: 'bg-state-level',
+  paused: 'bg-state-paused',
+  break: 'bg-state-break',
+  awaitingHost: 'bg-state-warning',
+  overtime: 'bg-state-overtime',
+};
+
+/** How far through the current segment the clock is, 0–1. */
+function segmentProgress(durationMs: number, remainingMs: number): number {
+  if (durationMs <= 0) return 1;
+  return Math.min(1, Math.max(0, 1 - remainingMs / durationMs));
+}
 
 interface Props {
   tournament: Tournament;
@@ -210,20 +234,44 @@ export function LiveClock({
 
   const nowLabel = `${title}${model.blinds ? ` ${formatBlinds(model.blinds.sb, model.blinds.bb)}` : ''}`;
   const tv = fullscreen.active || screen;
+  const countdown = formatCountdown(view.remainingMs);
+  // "1:00:00" has two more characters than "12:00": step the size down so it still fits.
+  const long = countdown.length > 5;
+  // An ad-hoc break has no fixed length to measure against.
+  const progress = view.inInterlude
+    ? undefined
+    : segmentProgress(model.segment.durationMs, view.remainingMs);
 
   return (
     <main
       className={
         tv
-          ? 'fixed inset-0 z-50 flex flex-col gap-4 overflow-auto bg-surface p-4'
-          : 'mx-auto flex max-w-4xl flex-col gap-4'
+          ? 'fixed inset-0 z-50 flex flex-col gap-4 overflow-auto bg-surface bg-[radial-gradient(120%_70%_at_50%_-10%,#0f3d2e99_0%,transparent_60%)] p-4 sm:gap-6 sm:p-8'
+          : 'mx-auto flex w-full max-w-5xl flex-col gap-4'
       }
     >
-      {!tv && (
-        <Link to="/" className={buttonQuiet + ' self-start'}>
-          {t('setup.home')}
-        </Link>
-      )}
+      <header className="flex min-h-11 items-center justify-between gap-3">
+        {tv ? (
+          <p className="truncate font-display text-xl font-semibold text-ink-muted sm:text-3xl">
+            {tournament.name ?? t('home.untitled')}
+          </p>
+        ) : (
+          <Link to="/" className={`${buttonQuiet} -ml-2`}>
+            <Icon name="home" />
+            {t('setup.home')}
+          </Link>
+        )}
+        {!tv && tournament.name && (
+          <p className="hidden min-w-0 truncate font-display text-lg font-semibold text-ink-muted sm:block">
+            {tournament.name}
+          </p>
+        )}
+        <p className={`${pill} ${STATE_COLOUR[kind]} ${tv ? 'sm:px-4 sm:py-1.5 sm:text-lg' : ''}`}>
+          <span aria-hidden="true" className={`size-2 rounded-full ${STATE_BG[kind]} ${kind === 'running' ? 'motion-safe:animate-pulse' : ''}`} />
+          <span>{t(`clock.state.${kind}`)}</span>
+        </p>
+      </header>
+
       {notice && <Banner tone="warning">{notice}</Banner>}
       {!controller && !screen && (
         <Banner tone="info">
@@ -245,8 +293,12 @@ export function LiveClock({
       )}
       {speaker && !state.muted && audio.state === 'locked' && (
         <Banner tone="info">
-          <span>{t('alerts.locked')}</span>
+          <span className="flex items-center gap-2">
+            <Icon name="mute" className="size-5 text-ink-muted" />
+            {t('alerts.locked')}
+          </span>
           <button type="button" className={buttonSecondary} onClick={audio.unlock}>
+            <Icon name="volume" />
             {t('alerts.unlock')}
           </button>
         </Banner>
@@ -257,9 +309,11 @@ export function LiveClock({
       {alert && (
         <div
           role="alert"
-          className={`${card} flex items-center gap-3 border-l-4 border-state-warning text-lg font-semibold`}
+          className={`${card} flex items-center gap-3 border-state-warning/60 text-lg font-semibold`}
         >
-          <BellIcon />
+          <span className="flex size-10 items-center justify-center rounded-full bg-state-warning/15 text-state-warning">
+            <Icon name="bell" className="size-6" />
+          </span>
           <span>{alertText(t, alert)}</span>
         </div>
       )}
@@ -275,34 +329,65 @@ export function LiveClock({
         <p className="text-sm text-ink-muted">{t('clock.wakeLock.unavailable')}</p>
       )}
 
-      <section className="flex flex-col items-center gap-2 text-center" aria-labelledby="clock-title">
-        <p className={`rounded-full bg-surface-raised px-3 py-1 text-sm font-semibold ${STATE_COLOUR[kind]}`}>
-          {t(`clock.state.${kind}`)}
-        </p>
-        <h1 id="clock-title" className="font-display text-[clamp(2rem,6vw,5rem)] leading-tight">
+      <section
+        className={`relative flex flex-col items-center text-center ${
+          tv ? 'min-h-0 flex-1 justify-center gap-[1.5vh]' : `${card} gap-3 py-6 sm:py-8`
+        }`}
+        aria-labelledby="clock-title"
+      >
+        <h1
+          id="clock-title"
+          className={`font-display font-bold leading-tight ${
+            tv ? 'text-[min(5vw,7vh)]' : 'text-[clamp(1.75rem,5vw,3.25rem)]'
+          }`}
+        >
           {title}
         </h1>
         <p
           role="timer"
           aria-label={t('clock.timeLeft')}
-          className={`font-display tabular-nums leading-none ${STATE_COLOUR[kind]} ${
-            tv ? 'text-[clamp(5rem,26vw,22rem)]' : 'text-[clamp(4rem,20vw,12rem)]'
+          className={`font-clock font-semibold tabular-nums leading-[0.85] tracking-tight ${STATE_COLOUR[kind]} ${
+            tv
+              ? long
+                ? 'text-[min(20vw,32vh)]'
+                : 'text-[min(27vw,36vh)]'
+              : long
+                ? 'text-[clamp(4rem,17vw,10rem)]'
+                : 'text-[clamp(5.5rem,24vw,12rem)]'
           }`}
         >
-          {formatCountdown(view.remainingMs)}
+          {countdown}
         </p>
+        {progress !== undefined && (
+          <div
+            aria-hidden="true"
+            className={`h-2 w-full overflow-hidden rounded-full bg-white/10 ${tv ? 'max-w-5xl sm:h-3' : 'max-w-md'}`}
+          >
+            <div
+              className={`h-full rounded-full ${STATE_BG[kind]} transition-[width] duration-1000 ease-linear`}
+              style={{ width: `${Math.round(progress * 1000) / 10}%` }}
+            />
+          </div>
+        )}
         {model.blinds && !view.inInterlude && (
-          <p className="font-display text-[clamp(2rem,8vw,6rem)] tabular-nums">
-            {formatBlinds(model.blinds.sb, model.blinds.bb)}
-          </p>
+          <div className="mt-1 flex flex-col items-center">
+            <span className={eyebrow}>{t('clock.blinds')}</span>
+            <p
+              className={`font-clock font-semibold tabular-nums leading-none ${
+                tv ? 'text-[min(10vw,12vh)]' : 'text-[clamp(2.75rem,10vw,5.5rem)]'
+              }`}
+            >
+              {formatBlinds(model.blinds.sb, model.blinds.bb)}
+            </p>
+          </div>
         )}
         {model.blinds && !view.inInterlude && model.blinds.ante > 0 && (
-          <p className="text-[clamp(1.25rem,3vw,2.5rem)]">
+          <p className={`font-clock font-medium text-ink-muted ${tv ? 'text-[min(3vw,4vh)]' : 'text-2xl'}`}>
             {t('clock.ante', { ante: formatChips(model.blinds.ante) })}
           </p>
         )}
         {view.inInterlude && model.blinds && (
-          <p className="text-[clamp(1.25rem,3vw,2.5rem)]">
+          <p className="text-[clamp(1.25rem,3vw,2.5rem)] text-ink-muted">
             {t('clock.thenLevel', {
               label: segmentLabel(t, model.segment, index),
               blinds: formatBlinds(model.blinds.sb, model.blinds.bb),
@@ -329,9 +414,11 @@ export function LiveClock({
                   setExtension(extend(schedule, config, ctx, OVERTIME_LEVELS));
                 }}
               >
+                <Icon name="plus" />
                 {t('clock.overtime.addLevels')}
               </button>
               <button type="button" className={buttonSecondary} onClick={() => setEditing(true)}>
+                <Icon name="edit" />
                 {t('clock.control.edit')}
               </button>
             </span>
@@ -355,16 +442,6 @@ export function LiveClock({
         />
       )}
 
-      <Details
-        t={t}
-        tournament={tournament}
-        model={model}
-        view={view}
-        now={now}
-        controller={controller}
-        onPlayers={(delta) => void actions.changePlayers(delta)}
-      />
-
       {confirming && (
         <Confirm
           text={t(confirming === 'previous' ? 'clock.confirm.previous' : 'clock.confirm.end')}
@@ -379,94 +456,139 @@ export function LiveClock({
       )}
 
       {controller && (
-        <section aria-label={t('clock.controls')} className="flex flex-wrap justify-center gap-2">
-          <button type="button" className={buttonPrimary} onClick={pauseResume}>
-            {t(
-              view.status === 'idle'
-                ? 'clock.control.start'
-                : view.status === 'running'
-                  ? 'clock.control.pause'
-                  : 'clock.control.resume',
-            )}
-          </button>
-          <button
-            type="button"
-            className={buttonSecondary}
-            disabled={!canPrevious}
-            onClick={() => setConfirming('previous')}
-          >
-            {t('clock.control.previous')}
-          </button>
-          <button type="button" className={buttonSecondary} disabled={!canNext} onClick={() => run(next)}>
-            {t('clock.control.next')}
-          </button>
-          {onBreak ? (
-            <>
-              <button type="button" className={buttonSecondary} onClick={() => run(endBreak)}>
-                {t('clock.control.endBreak')}
-              </button>
+        <section aria-label={t('clock.controls')} className="flex flex-col items-center gap-4">
+          <div className="flex items-center justify-center gap-3 sm:gap-5">
+            <button
+              type="button"
+              className={`${buttonSecondary} size-14 rounded-full px-0 sm:w-auto sm:px-5`}
+              disabled={!canPrevious}
+              onClick={() => setConfirming('previous')}
+            >
+              <Icon name="previous" className="size-6" />
+              <span className="sr-only sm:not-sr-only">{t('clock.control.previous')}</span>
+            </button>
+            <button
+              type="button"
+              className={`${buttonPrimary} h-16 min-w-44 rounded-full px-8 text-xl`}
+              onClick={pauseResume}
+            >
+              <Icon name={view.status === 'running' ? 'pause' : 'play'} className="size-6" />
+              {t(
+                view.status === 'idle'
+                  ? 'clock.control.start'
+                  : view.status === 'running'
+                    ? 'clock.control.pause'
+                    : 'clock.control.resume',
+              )}
+            </button>
+            <button
+              type="button"
+              className={`${buttonSecondary} size-14 rounded-full px-0 sm:w-auto sm:px-5`}
+              disabled={!canNext}
+              onClick={() => run(next)}
+            >
+              <span className="sr-only sm:not-sr-only">{t('clock.control.next')}</span>
+              <Icon name="next" className="size-6" />
+            </button>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {onBreak ? (
+              <>
+                <button type="button" className={buttonSecondary} onClick={() => run(endBreak)}>
+                  <Icon name="play" className="size-4" />
+                  {t('clock.control.endBreak')}
+                </button>
+                <button
+                  type="button"
+                  className={buttonSecondary}
+                  onClick={() => run((s, at) => extendBreak(s, at, EXTRA_BREAK_MS))}
+                >
+                  <Icon name="plus" className="size-4" />
+                  {t('clock.control.extendBreak')}
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
                 className={buttonSecondary}
-                onClick={() => run((s, at) => extendBreak(s, at, EXTRA_BREAK_MS))}
+                disabled={view.status === 'idle'}
+                onClick={toggleBreak}
               >
-                {t('clock.control.extendBreak')}
+                <Icon name="coffee" className="size-4" />
+                {t('clock.control.breakNow')}
               </button>
-            </>
-          ) : (
+            )}
+            <button
+              type="button"
+              className={`${buttonSecondary} aria-pressed:border-state-warning/60 aria-pressed:text-state-warning`}
+              aria-pressed={state.muted}
+              onClick={() => void actions.toggleMute()}
+            >
+              <Icon name={state.muted ? 'mute' : 'volume'} className="size-4" />
+              {t('clock.control.mute')}
+            </button>
             <button
               type="button"
               className={buttonSecondary}
-              disabled={view.status === 'idle'}
-              onClick={toggleBreak}
+              ref={alertsButton}
+              aria-expanded={alertSettings}
+              onClick={() => setAlertSettings((open) => !open)}
             >
-              {t('clock.control.breakNow')}
+              <Icon name="bell" className="size-4" />
+              {t('clock.control.alerts')}
             </button>
-          )}
-          <button
-            type="button"
-            className={buttonSecondary}
-            aria-pressed={state.muted}
-            onClick={() => void actions.toggleMute()}
-          >
-            {t('clock.control.mute')}
-          </button>
-          <button
-            type="button"
-            className={buttonSecondary}
-            ref={alertsButton}
-            aria-expanded={alertSettings}
-            onClick={() => setAlertSettings((open) => !open)}
-          >
-            {t('clock.control.alerts')}
-          </button>
-          <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
-            {t(fullscreen.active ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
-          </button>
-          {config && (
-            <button
-              type="button"
-              className={buttonSecondary}
-              aria-expanded={editing}
-              onClick={() => setEditing((e) => !e)}
-            >
-              {t('clock.control.edit')}
+            <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
+              <Icon name={fullscreen.active ? 'shrink' : 'expand'} className="size-4" />
+              {t(fullscreen.active ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
             </button>
-          )}
-          <button type="button" className={buttonQuiet} onClick={() => setConfirming('end')}>
-            {t('clock.control.end')}
-          </button>
+            {config && (
+              <button
+                type="button"
+                className={buttonSecondary}
+                aria-expanded={editing}
+                onClick={() => setEditing((e) => !e)}
+              >
+                <Icon name="edit" className="size-4" />
+                {t('clock.control.edit')}
+              </button>
+            )}
+            <button type="button" className={buttonQuiet} onClick={() => setConfirming('end')}>
+              <Icon name="flag" className="size-4" />
+              {t('clock.control.end')}
+            </button>
+          </div>
         </section>
       )}
-      {!controller && (
+
+      <Details
+        t={t}
+        tournament={tournament}
+        model={model}
+        view={view}
+        now={now}
+        controller={controller}
+        tv={tv}
+        onPlayers={(delta) => void actions.changePlayers(delta)}
+      />
+
+      {!controller && !screen && (
         <div className="flex justify-center">
           <button type="button" className={buttonSecondary} onClick={fullscreen.toggle}>
+            <Icon name={fullscreen.active ? 'shrink' : 'expand'} className="size-4" />
             {t(fullscreen.active ? 'clock.control.exitFullscreen' : 'clock.control.fullscreen')}
           </button>
         </div>
       )}
-      {controller && !tv && <p className="text-center text-sm text-ink-muted">{t('clock.shortcuts')}</p>}
+      {screen && !fullscreen.active && (
+        <div className="flex justify-center">
+          <button type="button" className={buttonQuiet} onClick={fullscreen.toggle}>
+            <Icon name="expand" className="size-4" />
+            {t('clock.control.fullscreen')}
+          </button>
+        </div>
+      )}
       {controller && !tv && extras}
+      {controller && !tv && <p className="hidden text-center text-sm text-ink-muted sm:block">{t('clock.shortcuts')}</p>}
 
       {controller && alertSettings && (
         <AlertSettings
@@ -516,14 +638,6 @@ function alertText(t: Translate, alert: PlannedAlert): string {
   }
 }
 
-function BellIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-7 w-7 shrink-0 fill-state-warning">
-      <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
-    </svg>
-  );
-}
-
 function recoveryText(t: Translate, recovery: Recovery, now: string, time: string): string {
   const parts = [
     recovery.levels === 1
@@ -549,73 +663,84 @@ interface DetailsProps {
   view: ClockView;
   now: number;
   controller: boolean;
+  /** Big-screen layout: one row of larger tiles. */
+  tv: boolean;
   onPlayers: (delta: number) => void;
 }
 
-function Details({ t, tournament, model, view, now, controller, onPlayers }: DetailsProps) {
+function Details({ t, tournament, model, view, now, controller, tv, onPlayers }: DetailsProps) {
   const { count, remaining } = tournament.participants;
   const next = model.next;
   const onBreak = model.segment.kind === 'break' || view.inInterlude;
   return (
-    <section aria-label={t('clock.details')} className={card}>
-    <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-lg sm:grid-cols-2">
-      <Item term={t('clock.next')}>
+    <section aria-label={t('clock.details')}>
+    <dl
+      className={`grid gap-2 sm:gap-3 ${
+        tv ? 'grid-cols-2 md:grid-cols-5 [&_dd]:text-[min(2.6vw,4.5vh)]' : 'grid-cols-2 md:grid-cols-5'
+      }`}
+    >
+      <Item term={t('clock.next')} wide>
         {next
           ? `${segmentLabel(t, next.segment, view.segmentIndex + 1)}${
               next.blinds ? ` · ${formatBlinds(next.blinds.sb, next.blinds.bb)}` : ''
             }`
           : t('clock.next.none')}
       </Item>
+      <Item term={t('clock.players')} wide>
+        <span className="flex items-center justify-between gap-2">
+          {controller && (
+            <button
+              type="button"
+              className={buttonIcon}
+              aria-label={t('clock.players.decrease')}
+              disabled={remaining <= 1}
+              onClick={() => onPlayers(-1)}
+            >
+              <Icon name="minus" />
+            </button>
+          )}
+          <span className="whitespace-nowrap tabular-nums">{t('clock.players.value', { remaining, count })}</span>
+          {controller && (
+            <button
+              type="button"
+              className={buttonIcon}
+              aria-label={t('clock.players.increase')}
+              disabled={remaining >= count}
+              onClick={() => onPlayers(1)}
+            >
+              <Icon name="plus" />
+            </button>
+          )}
+        </span>
+      </Item>
       {!onBreak && (
         <Item term={t('clock.untilBreak')}>
           {model.untilBreakMs === undefined ? t('clock.noBreak') : formatCountdown(model.untilBreakMs)}
         </Item>
       )}
-      <Item term={t('clock.players')}>
-        <span className="flex items-center gap-2">
-          {controller && (
-            <button
-              type="button"
-              className={buttonSecondary + ' min-w-11'}
-              aria-label={t('clock.players.decrease')}
-              disabled={remaining <= 1}
-              onClick={() => onPlayers(-1)}
-            >
-              −
-            </button>
-          )}
-          <span className="tabular-nums">{t('clock.players.value', { remaining, count })}</span>
-          {controller && (
-            <button
-              type="button"
-              className={buttonSecondary + ' min-w-11'}
-              aria-label={t('clock.players.increase')}
-              disabled={remaining >= count}
-              onClick={() => onPlayers(1)}
-            >
-              +
-            </button>
-          )}
-        </span>
-      </Item>
       {model.averageStackBB !== undefined && (
         <Item term={t('clock.avgStack')}>
           {t('clock.avgStack.value', { bb: Math.round(model.averageStackBB * 10) / 10 })}
         </Item>
       )}
       {tournament.startedAt !== undefined && (
-        <Item term={t('clock.elapsed')}>{formatElapsed(now - tournament.startedAt)}</Item>
+        <Item term={t('clock.elapsed')} wide>{formatElapsed(now - tournament.startedAt)}</Item>
       )}
     </dl>
     </section>
   );
 }
 
-function Item({ term, children }: { term: string; children: ReactNode }) {
+function Item({ term, children, wide }: { term: string; children: ReactNode; wide?: boolean }) {
+  // Phones give the wider values a full row; from md up (TV: five across) every tile is one cell.
   return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="text-ink-muted">{term}</dt>
-      <dd className="font-semibold">{children}</dd>
+    <div
+      className={`flex flex-col justify-between gap-1 rounded-2xl border border-line bg-surface-raised/80 px-4 py-3 ${
+        wide ? 'col-span-2 md:col-span-1' : ''
+      }`}
+    >
+      <dt className={eyebrow}>{term}</dt>
+      <dd className="font-clock text-2xl font-semibold tabular-nums leading-tight">{children}</dd>
     </div>
   );
 }
@@ -633,8 +758,10 @@ function Banner({
   return (
     <div
       role="status"
-      className={`${card} flex flex-wrap items-center justify-between gap-3 border-l-4 ${
-        tone === 'warning' ? 'border-state-warning' : 'border-state-break'
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${
+        tone === 'warning'
+          ? 'border-state-warning/40 bg-state-warning/10'
+          : 'border-state-break/30 bg-state-break/10'
       }`}
     >
       {children}

@@ -3,6 +3,7 @@ import type { Schedule } from '@/core/scheduling/schedule';
 import type { Tournament } from '@/core/tournaments/tournament';
 import { buttonPrimary, buttonQuiet, buttonSecondary, card } from '@/shared/components/styles';
 import { useT } from '@/shared/messages/tone';
+import { Icon } from '@/shared/components/Icon';
 import type { ScreenShareService } from '../service';
 import { formatCode } from '../wire';
 
@@ -43,6 +44,7 @@ export function SharePanel({ service, tournament, schedule }: Props) {
             setOpen(true);
           }}
         >
+          <Icon name="tv" />
           {t('share.open')}
         </button>
       </div>
@@ -57,6 +59,7 @@ export function SharePanel({ service, tournament, schedule }: Props) {
       <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
         <span role="status">{statusText}</span>
         <button type="button" className={buttonSecondary} onClick={() => setOpen(true)}>
+          <Icon name="tv" />
           {t('share.open')}
         </button>
       </div>
@@ -65,13 +68,16 @@ export function SharePanel({ service, tournament, schedule }: Props) {
 
   return (
     <section aria-labelledby={id} className={`${card} mx-auto flex w-full max-w-xl flex-col gap-3`}>
-      <h2 id={id} className="font-display text-2xl">
+      <h2 id={id} className="flex items-center gap-2 font-display text-2xl font-semibold">
+        <Icon name="tv" className="size-6 text-accent" />
         {t('share.title')}
       </h2>
       <p>{t('share.intro', { address: `${window.location.host}/screen` })}</p>
       <p className="flex flex-col items-center gap-1">
         <span className="text-sm text-ink-muted">{t('share.code')}</span>
-        <span className="font-display text-5xl tracking-widest tabular-nums">{formatCode(code)}</span>
+        <span className="rounded-2xl border border-accent/40 bg-accent/10 px-5 py-2 font-clock text-5xl font-semibold tracking-[0.12em] text-accent-strong tabular-nums">
+          {formatCode(code)}
+        </span>
       </p>
       <p className="flex flex-col gap-1">
         <span className="text-sm text-ink-muted">{t('share.link')}</span>
@@ -93,6 +99,7 @@ export function SharePanel({ service, tournament, schedule }: Props) {
             );
           }}
         >
+          <Icon name="copy" className="size-4" />
           {t('share.copy')}
         </button>
         {typeof navigator.share === 'function' && (
@@ -101,6 +108,7 @@ export function SharePanel({ service, tournament, schedule }: Props) {
             className={buttonSecondary}
             onClick={() => void navigator.share({ url: link }).catch(() => undefined)}
           >
+            <Icon name="share" className="size-4" />
             {t('share.share')}
           </button>
         )}
@@ -115,6 +123,7 @@ export function SharePanel({ service, tournament, schedule }: Props) {
             void service.stop(tournament.id);
           }}
         >
+          <Icon name="flag" className="size-4" />
           {t('share.stop')}
         </button>
       </div>
