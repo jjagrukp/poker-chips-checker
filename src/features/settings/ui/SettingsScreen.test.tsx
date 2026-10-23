@@ -101,4 +101,15 @@ describe('SettingsScreen', () => {
     expect(screen.getByText(/Alerts always show on screen as well/)).toBeInTheDocument();
     expect(screen.getByText(/a target, not a guarantee/)).toBeInTheDocument();
   });
+
+  it('links to the standalone limitations page', async () => {
+    await openSettings();
+    fireEvent.click(screen.getByRole('link', { name: 'Read the full limitations page' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Known limitations' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Before game night' })).toBeInTheDocument();
+    expect(screen.getByText(/Safari may delete data/)).toBeInTheDocument();
+    expect(screen.getByText(/silent switch off/)).toBeInTheDocument();
+  });
 });

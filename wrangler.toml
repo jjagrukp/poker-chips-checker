@@ -1,0 +1,18 @@
+# Cloudflare Pages project (D7, D35). Deploy: see docs/DEPLOY.md. Secrets (API keys) are set
+# with `wrangler pages secret put`, never here.
+name = "tournament-platform"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+[vars]
+AI_PHOTO_ENABLED = "true"
+AI_PROVIDER = "anthropic"
+RATE_LIMIT_PER_IP_PER_HOUR = "10"
+DAILY_REQUEST_CAP = "500"
+
+[[d1_databases]]
+binding = "RATE_LIMIT_DB"
+database_name = "tournament-rate-limits"
+# Replace with the id printed by `npx wrangler d1 create tournament-rate-limits`.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

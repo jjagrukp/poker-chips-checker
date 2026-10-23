@@ -15,6 +15,7 @@ import { buttonQuiet, buttonSecondary, card, hint, label } from '@/shared/compon
 import type { MessageKey, Tone } from '@/shared/messages';
 import { useT } from '@/shared/messages/tone';
 import { datedFilename, downloadText } from '@/shared/utilities/download';
+import { LimitationsList } from './Limitations';
 import { QuarantineNotice } from './StorageNotices';
 
 // Settings (spec 01 §5 #8): tone, sound & alerts, break-end default, backup/import, delete
@@ -37,17 +38,6 @@ const radio = 'h-5 w-5 shrink-0 accent-accent';
 const row = 'flex min-h-11 items-center gap-3';
 const TONES: Tone[] = ['playful', 'neutral'];
 const BREAK_ENDS: BreakEndBehaviour[] = ['waitForHost', 'auto'];
-const LIMITATIONS = [
-  'storage',
-  'safari',
-  'offline',
-  'wakeLock',
-  'silent',
-  'notifications',
-  'clock',
-  'target',
-  'photos',
-] as const;
 
 export function SettingsScreen(props: Props) {
   const { repos, data, clock, audio, notifier, appName, onToneChange, onDeleted } = props;
@@ -291,11 +281,10 @@ export function SettingsScreen(props: Props) {
 
       <Section id={ids.about} title={t('settings.about.heading')}>
         <p>{t('settings.about.intro', { name: appName })}</p>
-        <ul className="flex list-disc flex-col gap-2 pl-5" id="limitations">
-          {LIMITATIONS.map((key) => (
-            <li key={key}>{t(`settings.about.${key}`)}</li>
-          ))}
-        </ul>
+        <LimitationsList />
+        <Link to="/limitations" className="self-start underline">
+          {t('settings.about.more')}
+        </Link>
       </Section>
     </main>
   );

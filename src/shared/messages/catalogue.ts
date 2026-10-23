@@ -124,6 +124,21 @@ export const messages = {
     'The length you choose is a target, not a guarantee. Freezeouts end when someone has all the chips.',
   'settings.about.photos':
     'Chip photos are sent to an AI service to be counted and are never stored. Nothing else leaves your device.',
+  'settings.about.more': 'Read the full limitations page',
+
+  'limitations.title': 'Known limitations',
+  'limitations.home': 'Home',
+  'limitations.known': 'What to know',
+  'limitations.before.heading': 'Before game night',
+  'limitations.before.online': 'Open the app once while online, so it works offline on the night.',
+  'limitations.before.home':
+    'On iPhone or iPad, add the app to your Home Screen so Safari keeps your data.',
+  'limitations.before.power':
+    'Plug in the device running the clock and set its auto-lock as long as it goes.',
+  'limitations.before.sound':
+    'Play the test sound in Settings and turn the volume up. On iPhone, turn the silent switch off.',
+  'limitations.before.clock': "Leave the device's date and time set automatically.",
+  'limitations.before.backup': 'Export a backup if there are tournaments or chip sets you want to keep.',
 
   'format.duration.hours': '{h}h',
   'format.duration.minutes': '{m}m',

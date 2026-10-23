@@ -151,7 +151,7 @@ async function analyse(request: Request, env: PhotoEnv, deps: AnalyseDeps): Prom
   const mediaType = sniffImage(bytes);
   if (!mediaType || mediaType !== contentType) throw new Failure(400, 'bad_image');
 
-  const decision = deps.limiter.take(deps.clientIp(request), deps.now());
+  const decision = await deps.limiter.take(deps.clientIp(request), deps.now());
   if (decision === 'ip') throw new Failure(429, 'rate_limited');
   if (decision === 'daily') throw new Failure(429, 'daily_cap');
 

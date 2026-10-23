@@ -17,6 +17,7 @@
     "src/app/configuration/brand.ts",
     "src/features/chip-inventory/photo/schema.ts",
     "api",
+    "functions",
     "vite.config.ts",
     "playwright.config.ts",
     "tests/e2e"

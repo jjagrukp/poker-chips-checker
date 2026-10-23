@@ -69,7 +69,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.{ts,js}', 'tests/**', 'api/**'],
+    files: ['*.{ts,js}', 'tests/**', 'api/**', 'functions/**', 'scripts/**'],
     languageOptions: { globals: globals.node },
   },
   ...boundary(

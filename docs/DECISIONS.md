@@ -183,6 +183,13 @@ and extracts the analysis; checks, retry, deadline and Zod stay in the handler. 
 in `x-goog-api-key` (never the URL), `responseJsonSchema` = the same report schema, only `finishReason: STOP` accepted.
 Default `gemini-3.8-flash`. Needs a paid key: free-tier data may be used by Google, which breaks the "never stored" promise.
 
+D35 — Cloudflare Pages host adapter (closes D30's M11 item)
+`functions/api/*` re-export `api/cloudflare.ts`. Client IP = `CF-Connecting-IP` (set by the edge). Durable limiter = D1
+(strongly consistent; KV is eventually consistent and 1 write/s per key, so a burst would overshoot): atomic
+`INSERT … ON CONFLICT … RETURNING` counters in fixed hour/day windows, IPs SHA-256 hashed, pruned on each new day. No
+`RATE_LIMIT_DB` binding → AI reported off. `_middleware` adds nosniff/no-referrer/CSP/HSTS to `/api/*`; `_headers` adds
+HSTS (no includeSubDomains). Wrangler runs via `npx` (not a dependency). `postbuild` greps `dist` for keys.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).
