@@ -19,7 +19,7 @@ import {
   type CommandResult,
 } from '@/core/timer/commands';
 import { deriveClock, type ClockView } from '@/core/timer/derive-clock';
-import type { Tournament } from '@/core/tournaments/tournament';
+import { deriveOptions, type Tournament } from '@/core/tournaments/tournament';
 import type { AudioState } from '@/infrastructure/audio/alert-audio';
 import type { HoldemConfig } from '@/modules/texas-holdem/config';
 import { extend, type EditResult } from '@/modules/texas-holdem/edits';
@@ -46,13 +46,7 @@ import {
 import type { ClockPlatform, ClockStore, Recovery } from '../state/clock-store';
 import { useAlerts } from './alerts';
 import { AlertSettings } from './AlertSettings';
-import {
-  useFullscreen,
-  useRecoveryTriggers,
-  useShortcuts,
-  useTicker,
-  useWakeLock,
-} from './hooks';
+import { useFullscreen, useRecoveryTriggers, useShortcuts, useTicker, useWakeLock } from './hooks';
 import { HandRankings } from './HandRankings';
 import { RunningEditor } from './RunningEditor';
 
@@ -97,7 +91,15 @@ interface Props {
   state: Pick<ClockStore, 'role' | 'muted' | 'alertPrefs' | 'recovery' | 'warning'>;
   actions: Omit<
     ClockStore,
-    'phase' | 'tournament' | 'schedule' | 'config' | 'role' | 'muted' | 'alertPrefs' | 'recovery' | 'warning'
+    | 'phase'
+    | 'tournament'
+    | 'schedule'
+    | 'config'
+    | 'role'
+    | 'muted'
+    | 'alertPrefs'
+    | 'recovery'
+    | 'warning'
   >;
   ctx: ModuleContext;
   platform: Pick<ClockPlatform, 'monotonic' | 'wakeLock' | 'audio' | 'notifier'>;
@@ -132,9 +134,10 @@ export function LiveClock({
   const controller = state.role === 'controller';
   /** This device plays the alerts: the controlling tab, or a shared screen. */
   const speaker = controller || screen;
+  const { breakEndBehaviour, levelEndBehaviour } = tournament.settings;
   const options = useMemo(
-    () => ({ breakEndBehaviour: tournament.settings.breakEndBehaviour }),
-    [tournament.settings.breakEndBehaviour],
+    () => deriveOptions({ settings: { breakEndBehaviour, levelEndBehaviour } }),
+    [breakEndBehaviour, levelEndBehaviour],
   );
   const derive = (at: number) => deriveClock(schedule, anchor, at, options);
   const { skewed, recover, command } = actions;
@@ -163,7 +166,10 @@ export function LiveClock({
   const view = derive(now);
   const model = clockScreen(schedule, anchor, view, tournament, config);
   // A TV stays awake while paused too: it's on show the whole night.
-  const wakeLock = useWakeLock(platform.wakeLock, screen || (controller && view.status === 'running'));
+  const wakeLock = useWakeLock(
+    platform.wakeLock,
+    screen || (controller && view.status === 'running'),
+  );
   const fullscreen = useFullscreen();
   const [confirming, setConfirming] = useState<'previous' | 'end' | null>(null);
   const [editing, setEditing] = useState(false);
@@ -187,7 +193,7 @@ export function LiveClock({
     onFired: (keys) => void actions.markAlertsFired(keys),
     notify: (fired) => ({
       title: tournament.name ?? t('home.untitled'),
-      body: alertText(t, fired),
+      body: alertText(t, fired, options.levelEndBehaviour === 'waitForHost'),
     }),
   });
 
@@ -215,6 +221,8 @@ export function LiveClock({
     run(view.status === 'idle' ? start : view.status === 'running' ? pause : resume);
   const toggleBreak = () => {
     if (onBreak) run(endBreak);
+    // Held before the scheduled break: start it, rather than stacking an ad-hoc one (spec 11).
+    else if (view.status === 'awaitingHost' && model.segment.kind === 'break') run(resume);
     else if (view.status !== 'idle') run((s, at) => startBreakNow(s, at, breakMs));
   };
 
@@ -235,6 +243,28 @@ export function LiveClock({
 
   const nowLabel = `${title}${model.blinds ? ` ${formatBlinds(model.blinds.sb, model.blinds.bb)}` : ''}`;
   const tv = fullscreen.active || screen;
+  // Held before the next segment (spec 11): after a level ran out the table may be mid-hand,
+  // after a break players may still be away. Either way only the host starts the clock.
+  const held = view.status === 'awaitingHost';
+  const previousSegment = schedule.segments[index - 1];
+  // Inferred, not stored: a level hold has the next segment at full length. (An ad-hoc break
+  // taken while already held, that then also waits, reads as "Time's up" too: harmless.)
+  const levelOver =
+    held && previousSegment?.kind === 'level' && view.remainingMs === model.segment.durationMs;
+  const startButton = useRef<HTMLButtonElement>(null);
+  const dock = useRef<HTMLElement>(null);
+  // The dock's play button goes away when the clock holds: keep keyboard focus on the action.
+  useEffect(() => {
+    if (!held) return;
+    const active = document.activeElement;
+    if (active === document.body || (active && dock.current?.contains(active))) {
+      startButton.current?.focus();
+    }
+  }, [held]);
+  const startLabel =
+    model.segment.kind === 'break'
+      ? t('clock.control.startBreak')
+      : t('clock.control.startLevel', { label: title });
   const showReference = tournament.settings.showReference ?? false;
   const withReference = tv && showReference;
   const countdown = formatCountdown(view.remainingMs);
@@ -273,7 +303,10 @@ export function LiveClock({
           </p>
         )}
         <p className={`${pill} ${STATE_COLOUR[kind]} ${tv ? 'sm:px-4 sm:py-1.5 sm:text-lg' : ''}`}>
-          <span aria-hidden="true" className={`size-2 rounded-full ${STATE_BG[kind]} ${kind === 'running' ? 'motion-safe:animate-pulse' : ''}`} />
+          <span
+            aria-hidden="true"
+            className={`size-2 rounded-full ${STATE_BG[kind]} ${kind === 'running' ? 'motion-safe:animate-pulse' : ''}`}
+          />
           <span>{t(`clock.state.${kind}`)}</span>
         </p>
       </header>
@@ -297,7 +330,24 @@ export function LiveClock({
           {t(`clock.warning.${state.warning}`)}
         </Banner>
       )}
-      {speaker && !state.muted && audio.state === 'locked' && (
+      {speaker && !state.muted && audio.state === 'locked' && tv && (
+        <div
+          role="status"
+          className="fixed bottom-[3vh] left-1/2 z-[64] flex -translate-x-1/2 items-center gap-3 rounded-full border border-line bg-surface-raised/95 py-1.5 pr-1.5 pl-4 text-[min(2vh,1.4vw)] shadow-[var(--shadow-card)] backdrop-blur"
+        >
+          <Icon name="mute" className="size-[1.2em] text-ink-muted" />
+          <span>{t('alerts.locked')}</span>
+          <button
+            type="button"
+            className={`${buttonSecondary} min-h-11 rounded-full text-[1em]`}
+            onClick={audio.unlock}
+          >
+            <Icon name="volume" className="size-[1.1em]" />
+            {t('alerts.unlock')}
+          </button>
+        </div>
+      )}
+      {speaker && !state.muted && audio.state === 'locked' && !tv && (
         <Banner tone="info">
           <span className="flex items-center gap-2">
             <Icon name="mute" className="size-5 text-ink-muted" />
@@ -312,15 +362,24 @@ export function LiveClock({
       {speaker && audio.state === 'unsupported' && (
         <p className="text-sm text-ink-muted">{t('alerts.unsupported')}</p>
       )}
-      {alert && (
+      {/* While held, the "Time's up" headline already says it; a toast would cover it on a TV. */}
+      {alert && !(tv && held) && (
         <div
           role="alert"
-          className={`${card} flex items-center gap-3 border-state-warning/60 text-lg font-semibold`}
+          className={
+            tv
+              ? 'fixed top-[3vh] left-1/2 z-[65] flex w-max max-w-[min(90vw,70rem)] -translate-x-1/2 items-center gap-[1.2vw] rounded-[2vh] border-2 border-state-warning/70 bg-surface-raised/95 px-[2.4vw] py-[1.6vh] font-display text-[min(4.2vh,2.8vw)] font-bold shadow-[0_2vh_6vh_-1vh_rgba(0,0,0,0.8)] backdrop-blur'
+              : `${card} flex items-center gap-3 border-state-warning/60 text-lg font-semibold`
+          }
         >
-          <span className="flex size-10 items-center justify-center rounded-full bg-state-warning/15 text-state-warning">
-            <Icon name="bell" className="size-6" />
+          <span
+            className={`flex shrink-0 items-center justify-center rounded-full bg-state-warning/15 text-state-warning ${
+              tv ? 'size-[1.6em]' : 'size-10'
+            }`}
+          >
+            <Icon name="bell" className={tv ? 'size-[0.9em]' : 'size-6'} />
           </span>
-          <span>{alertText(t, alert)}</span>
+          <span>{alertText(t, alert, options.levelEndBehaviour === 'waitForHost')}</span>
         </div>
       )}
       {alert && state.alertPrefs.flash && (
@@ -332,7 +391,15 @@ export function LiveClock({
         />
       )}
       {speaker && (wakeLock === 'unsupported' || wakeLock === 'denied') && (
-        <p className="text-sm text-ink-muted">{t('clock.wakeLock.unavailable')}</p>
+        <p
+          className={
+            tv
+              ? 'fixed bottom-[1.5vh] left-[2vw] z-[63] text-xs text-ink-muted'
+              : 'text-sm text-ink-muted'
+          }
+        >
+          {t('clock.wakeLock.unavailable')}
+        </p>
       )}
 
       <section
@@ -346,6 +413,16 @@ export function LiveClock({
         }`}
         aria-labelledby="clock-title"
       >
+        {held && (
+          <p
+            className={`font-display font-bold text-state-warning ${
+              tv ? 'text-[min(4.5cqw,8cqh)]' : 'text-2xl sm:text-3xl'
+            }`}
+          >
+            {t(levelOver ? 'clock.timeUp' : 'clock.breakDone')}
+          </p>
+        )}
+        {held && <span className={eyebrow}>{t('clock.upNext')}</span>}
         <h1
           id="clock-title"
           className={`font-display font-bold leading-tight ${
@@ -359,8 +436,8 @@ export function LiveClock({
           aria-label={t('clock.timeLeft')}
           className={`font-clock font-semibold tabular-nums leading-[0.85] tracking-tight ${STATE_COLOUR[kind]} ${
             tv
-              ? long
-                ? 'text-[min(20cqw,44cqh)]'
+              ? long || held
+                ? 'text-[min(20cqw,38cqh)]'
                 : 'text-[min(27cqw,48cqh)]'
               : long
                 ? 'text-[clamp(4rem,17vw,10rem)]'
@@ -369,7 +446,7 @@ export function LiveClock({
         >
           {countdown}
         </p>
-        {progress !== undefined && (
+        {progress !== undefined && !held && (
           <div
             aria-hidden="true"
             className={`h-2 w-full overflow-hidden rounded-full bg-white/10 ${tv ? 'max-w-5xl sm:h-3' : 'max-w-md'}`}
@@ -393,7 +470,9 @@ export function LiveClock({
           </div>
         )}
         {model.blinds && !view.inInterlude && model.blinds.ante > 0 && (
-          <p className={`font-clock font-medium text-ink-muted ${tv ? 'text-[min(3cqw,5cqh)]' : 'text-2xl'}`}>
+          <p
+            className={`font-clock font-medium text-ink-muted ${tv ? 'text-[min(3cqw,5cqh)]' : 'text-2xl'}`}
+          >
             {t('clock.ante', { ante: formatChips(model.blinds.ante) })}
           </p>
         )}
@@ -406,12 +485,25 @@ export function LiveClock({
             })}
           </p>
         )}
+        {controller && held && (
+          <button
+            ref={startButton}
+            type="button"
+            className={`${buttonPrimary} mt-2 h-16 w-full max-w-md rounded-full text-xl ring-4 ring-accent/25 sm:text-2xl`}
+            onClick={() => run(resume)}
+          >
+            <Icon name="play" className="size-6" />
+            {startLabel}
+          </button>
+        )}
         <p className="sr-only" aria-live="polite">
-          {nowLabel}
+          {held
+            ? `${t(levelOver ? 'clock.timeUp' : 'clock.breakDone')}. ${t('clock.upNext')}: ${nowLabel}`
+            : nowLabel}
         </p>
       </section>
 
-      {view.status === 'awaitingHost' && <Banner tone="warning">{t('clock.awaitingHost')}</Banner>}
+      {held && !levelOver && <Banner tone="warning">{t('clock.awaitingHost')}</Banner>}
       {overtime && (
         <Banner tone="warning">
           <span>{t('clock.overtime', { time: formatElapsed(view.overtimeMs) })}</span>
@@ -467,7 +559,11 @@ export function LiveClock({
       )}
 
       {controller && (
-        <section aria-label={t('clock.controls')} className="flex flex-col items-center gap-4">
+        <section
+          ref={dock}
+          aria-label={t('clock.controls')}
+          className="flex flex-col items-center gap-4"
+        >
           <div className="flex items-center justify-center gap-3 sm:gap-5">
             <button
               type="button"
@@ -478,20 +574,23 @@ export function LiveClock({
               <Icon name="previous" className="size-6" />
               <span className="sr-only sm:not-sr-only">{t('clock.control.previous')}</span>
             </button>
-            <button
-              type="button"
-              className={`${buttonPrimary} h-16 min-w-44 rounded-full px-8 text-xl`}
-              onClick={pauseResume}
-            >
-              <Icon name={view.status === 'running' ? 'pause' : 'play'} className="size-6" />
-              {t(
-                view.status === 'idle'
-                  ? 'clock.control.start'
-                  : view.status === 'running'
-                    ? 'clock.control.pause'
-                    : 'clock.control.resume',
-              )}
-            </button>
+            {/* While held, the hero's "Start Level N" is the one big action (Space still works). */}
+            {!held && (
+              <button
+                type="button"
+                className={`${buttonPrimary} h-16 min-w-44 rounded-full px-8 text-xl`}
+                onClick={pauseResume}
+              >
+                <Icon name={view.status === 'running' ? 'pause' : 'play'} className="size-6" />
+                {t(
+                  view.status === 'idle'
+                    ? 'clock.control.start'
+                    : view.status === 'running'
+                      ? 'clock.control.pause'
+                      : 'clock.control.resume',
+                )}
+              </button>
+            )}
             <button
               type="button"
               className={`${buttonSecondary} size-14 rounded-full px-0 sm:w-auto sm:px-5`}
@@ -612,7 +711,9 @@ export function LiveClock({
         <p className="text-center text-sm text-ink-muted">{t('clock.reference.hint')}</p>
       )}
       {controller && !tv && extras}
-      {controller && !tv && <p className="hidden text-center text-sm text-ink-muted sm:block">{t('clock.shortcuts')}</p>}
+      {controller && !tv && (
+        <p className="hidden text-center text-sm text-ink-muted sm:block">{t('clock.shortcuts')}</p>
+      )}
 
       {controller && alertSettings && (
         <AlertSettings
@@ -654,7 +755,11 @@ function segmentLabel(t: Translate, segment: Segment, index: number): string {
     : t('holdem.segment.break');
 }
 
-function alertText(t: Translate, alert: PlannedAlert): string {
+function alertText(t: Translate, alert: PlannedAlert, levelsWait = false): string {
+  // These sound when a level runs out; if levels wait for the host, the blinds aren't up yet.
+  if (levelsWait && (alert.type === 'levelStart' || alert.type === 'breakStart')) {
+    return t('transition.timeUp');
+  }
   switch (alert.type) {
     case 'levelStart':
       return t('transition.levelUp');
@@ -679,7 +784,8 @@ function recoveryText(t: Translate, recovery: Recovery, now: string, time: strin
         : '',
   ].filter(Boolean);
   if (parts.length === 0) return t('clock.recovered.breakEnded', { now, time });
-  const passed = parts.length === 2 ? t('clock.recovered.and', { a: parts[0], b: parts[1] }) : parts[0];
+  const passed =
+    parts.length === 2 ? t('clock.recovered.and', { a: parts[0], b: parts[1] }) : parts[0];
   return t('clock.recovered', { passed, now, time });
 }
 
@@ -697,67 +803,83 @@ interface DetailsProps {
   onPlayers: (delta: number) => void;
 }
 
-function Details({ t, tournament, model, view, now, controller, tv, reference, onPlayers }: DetailsProps) {
+function Details({
+  t,
+  tournament,
+  model,
+  view,
+  now,
+  controller,
+  tv,
+  reference,
+  onPlayers,
+}: DetailsProps) {
   const { count, remaining } = tournament.participants;
   const next = model.next;
   const onBreak = model.segment.kind === 'break' || view.inInterlude;
   return (
     <section aria-label={t('clock.details')}>
-    <dl
-      className={`grid gap-2 sm:gap-3 ${
-        tv
-          ? `grid-cols-2 md:grid-cols-5 ${reference ? '[&_dd]:text-[min(1.8vw,4vh)]' : '[&_dd]:text-[min(2.6vw,4.5vh)]'}`
-          : 'grid-cols-2 md:grid-cols-5'
-      }`}
-    >
-      <Item term={t('clock.next')} wide>
-        {next
-          ? `${segmentLabel(t, next.segment, view.segmentIndex + 1)}${
-              next.blinds ? ` · ${formatBlinds(next.blinds.sb, next.blinds.bb)}` : ''
-            }`
-          : t('clock.next.none')}
-      </Item>
-      <Item term={t('clock.players')} wide>
-        <span className="flex items-center justify-between gap-2">
-          {controller && (
-            <button
-              type="button"
-              className={buttonIcon}
-              aria-label={t('clock.players.decrease')}
-              disabled={remaining <= 1}
-              onClick={() => onPlayers(-1)}
-            >
-              <Icon name="minus" />
-            </button>
-          )}
-          <span className="whitespace-nowrap tabular-nums">{t('clock.players.value', { remaining, count })}</span>
-          {controller && (
-            <button
-              type="button"
-              className={buttonIcon}
-              aria-label={t('clock.players.increase')}
-              disabled={remaining >= count}
-              onClick={() => onPlayers(1)}
-            >
-              <Icon name="plus" />
-            </button>
-          )}
-        </span>
-      </Item>
-      {!onBreak && (
-        <Item term={t('clock.untilBreak')}>
-          {model.untilBreakMs === undefined ? t('clock.noBreak') : formatCountdown(model.untilBreakMs)}
+      <dl
+        className={`grid gap-2 sm:gap-3 ${
+          tv
+            ? `grid-cols-2 md:grid-cols-5 ${reference ? '[&_dd]:text-[min(1.8vw,4vh)]' : '[&_dd]:text-[min(2.6vw,4.5vh)]'}`
+            : 'grid-cols-2 md:grid-cols-5'
+        }`}
+      >
+        <Item term={t('clock.next')} wide>
+          {next
+            ? `${segmentLabel(t, next.segment, view.segmentIndex + 1)}${
+                next.blinds ? ` · ${formatBlinds(next.blinds.sb, next.blinds.bb)}` : ''
+              }`
+            : t('clock.next.none')}
         </Item>
-      )}
-      {model.averageStackBB !== undefined && (
-        <Item term={t('clock.avgStack')}>
-          {t('clock.avgStack.value', { bb: Math.round(model.averageStackBB * 10) / 10 })}
+        <Item term={t('clock.players')} wide>
+          <span className="flex items-center justify-between gap-2">
+            {controller && (
+              <button
+                type="button"
+                className={buttonIcon}
+                aria-label={t('clock.players.decrease')}
+                disabled={remaining <= 1}
+                onClick={() => onPlayers(-1)}
+              >
+                <Icon name="minus" />
+              </button>
+            )}
+            <span className="whitespace-nowrap tabular-nums">
+              {t('clock.players.value', { remaining, count })}
+            </span>
+            {controller && (
+              <button
+                type="button"
+                className={buttonIcon}
+                aria-label={t('clock.players.increase')}
+                disabled={remaining >= count}
+                onClick={() => onPlayers(1)}
+              >
+                <Icon name="plus" />
+              </button>
+            )}
+          </span>
         </Item>
-      )}
-      {tournament.startedAt !== undefined && (
-        <Item term={t('clock.elapsed')} wide>{formatElapsed(now - tournament.startedAt)}</Item>
-      )}
-    </dl>
+        {!onBreak && (
+          <Item term={t('clock.untilBreak')}>
+            {model.untilBreakMs === undefined
+              ? t('clock.noBreak')
+              : formatCountdown(model.untilBreakMs)}
+          </Item>
+        )}
+        {model.averageStackBB !== undefined && (
+          <Item term={t('clock.avgStack')}>
+            {t('clock.avgStack.value', { bb: Math.round(model.averageStackBB * 10) / 10 })}
+          </Item>
+        )}
+        {tournament.startedAt !== undefined && (
+          <Item term={t('clock.elapsed')} wide>
+            {formatElapsed(now - tournament.startedAt)}
+          </Item>
+        )}
+      </dl>
     </section>
   );
 }

@@ -136,6 +136,7 @@ function catchUp(
 ): Normalised {
   const { segments } = schedule;
   const waitForHost = opts.breakEndBehaviour === 'waitForHost';
+  const waitAfterLevel = opts.levelEndBehaviour === 'waitForHost';
   const passedSegmentIds: string[] = [];
   const started: StartedSegment[] = [];
   let index = anchor.segmentIndex;
@@ -177,8 +178,9 @@ function catchUp(
       };
       return { anchor: overtime, view, started };
     }
-    // A held segment starts when the host resumes, not when the break ends.
-    if (waitForHost && current.kind === 'break') {
+    // A held segment starts when the host resumes, not when the previous one ends: after a
+    // break, and after a level when levels wait (the table may be mid-hand, spec 11).
+    if ((waitForHost && current.kind === 'break') || (waitAfterLevel && current.kind === 'level')) {
       const held = hold(anchor, index + 1, next.durationMs);
       return { anchor: held, view: { ...staticView(held), passedSegmentIds }, started };
     }

@@ -41,6 +41,8 @@ export const SettingsSchema = z.object({
   alerts: AlertPrefsSchema.optional(),
   /** Seeds new tournaments' break-end behaviour (Settings, spec 01 §5); additive, no version bump. */
   breakEndDefault: z.enum(['auto', 'waitForHost']).optional(),
+  /** Seeds new tournaments' level-end behaviour (spec 11); additive, no version bump. */
+  levelEndDefault: z.enum(['auto', 'waitForHost']).optional(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 

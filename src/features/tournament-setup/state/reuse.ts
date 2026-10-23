@@ -23,6 +23,7 @@ type PresetFields = Pick<
   | 'ante'
   | 'breaks'
   | 'breakEndBehaviour'
+  | 'levelEndBehaviour'
 >;
 
 export function presetFromTournament(
@@ -64,6 +65,8 @@ export function applyPreset(state: WizardState, preset: HoldemConfig): WizardSta
     ante: preset.ante,
     breaks: preset.breaks,
     breakEndBehaviour: preset.breakEndBehaviour,
+    // Presets saved before spec 11 have none: keep the draft's (the app default).
+    ...(preset.levelEndBehaviour ? { levelEndBehaviour: preset.levelEndBehaviour } : {}),
   };
   const known = (DURATION_PRESETS_MIN as readonly number[]).includes(preset.targetDurationMin);
   return {
@@ -87,11 +90,16 @@ export function duplicateOf(
   if (source.moduleId !== texasHoldemModule.id || !config.success) return state;
   const draft = SetupDraftSchema.safeParse(source.setupDraft);
   const tournament = name === undefined ? state.tournament : { ...state.tournament, name };
-  const base: WizardState = { ...state, tournament, config: config.data };
+  // Tournaments from before spec 11 have no level-end choice: keep the draft's (the app default).
+  const levelEnd = config.data.levelEndBehaviour ?? state.config.levelEndBehaviour;
+  const base: WizardState = {
+    ...state,
+    tournament,
+    config: { ...config.data, ...(levelEnd ? { levelEndBehaviour: levelEnd } : {}) },
+  };
   if (!draft.success) return applyPreset(base, config.data);
-  const schedule = draft.data.schedule && draft.data.scheduleEdited
-    ? renumber(draft.data.schedule, ctx)
-    : null;
+  const schedule =
+    draft.data.schedule && draft.data.scheduleEdited ? renumber(draft.data.schedule, ctx) : null;
   return {
     ...base,
     draft: { ...draft.data, schedule, scheduleEdited: schedule !== null },

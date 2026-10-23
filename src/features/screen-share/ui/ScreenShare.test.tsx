@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { renderApp } from '@/app/testing/render-app';
 import { MINUTE, SECOND } from '@/core/time';
@@ -40,12 +40,16 @@ function relay(now: () => number) {
     const url = new URL(String(input), 'http://app.test');
     const headers = new Headers(init.headers);
     headers.set('origin', 'http://app.test');
-    return handleScreen(new Request(url, { ...init, headers }), url.pathname.split('/').pop() ?? '', {
-      store,
-      limiter,
-      now,
-      clientIp: () => '192.0.2.1',
-    });
+    return handleScreen(
+      new Request(url, { ...init, headers }),
+      url.pathname.split('/').pop() ?? '',
+      {
+        store,
+        limiter,
+        now,
+        clientIp: () => '192.0.2.1',
+      },
+    );
   }) as typeof globalThis.fetch;
   return { fetch, client: (clock = now) => createScreenClient(fetch, clock) };
 }
@@ -107,6 +111,74 @@ describe('screen share', () => {
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'Hand rankings' })).not.toBeInTheDocument(),
     );
+  });
+
+  it('big-screen notices: alerts as a toast, the sound prompt as a pill (spec 11)', async () => {
+    const tv = settableClock(T0);
+    const { client } = relay(tv.now);
+    const t = activeFrom();
+    // One minute and a bit left in level 1.
+    if (!t.clock) throw new Error('no clock');
+    const clock = {
+      ...t.clock,
+      status: 'running' as const,
+      deadline: T0 + 62 * SECOND,
+    };
+    await client().put(CODE, KEY, {
+      schemaVersion: SCREEN_SCHEMA_VERSION,
+      tournament: { ...t, clock },
+      schedule: holdemSchedule(),
+      sentAt: T0,
+    });
+    renderScreen(client(tv.now), tv.now);
+    await screen.findByRole('timer');
+    const pill = screen
+      .getByText('Sound is off until you tap the screen.')
+      .closest('[role="status"]');
+    expect(pill).toHaveClass('fixed');
+    expect(within(pill as HTMLElement).getByRole('button', { name: 'Turn on sound' })).toHaveClass(
+      'min-h-11',
+    );
+
+    // Live ticks (a jump of 2 s or more counts as a sleep, and is marked missed instead).
+    for (let i = 0; i < 4; i++) {
+      tv.advance(SECOND);
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    const toast = await screen.findByRole('alert');
+    expect(toast).toHaveTextContent('One minute left');
+    expect(toast).toHaveClass('fixed');
+  });
+
+  it('shows "Time\'s up" and no toast while the TV waits for the host (spec 11)', async () => {
+    const tv = settableClock(T0);
+    const { client } = relay(tv.now);
+    const t = activeFrom();
+    const schedule = holdemSchedule();
+    const held = {
+      status: 'paused' as const,
+      segmentIndex: 1,
+      remainingMs: schedule.segments[1]?.durationMs ?? 0,
+      holdAtIndex: 1,
+      revision: 5,
+      updatedAt: T0,
+    };
+    await client().put(CODE, KEY, {
+      schemaVersion: SCREEN_SCHEMA_VERSION,
+      tournament: {
+        ...t,
+        clock: held,
+        settings: { ...t.settings, levelEndBehaviour: 'waitForHost' },
+      },
+      schedule,
+      sentAt: T0,
+    });
+    renderScreen(client(tv.now), tv.now);
+    expect(await screen.findByText("Time's up — finish this hand")).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Level 2');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // Read-only: only the phone can start the level.
+    expect(screen.queryByRole('button', { name: 'Start Level 2' })).not.toBeInTheDocument();
   });
 
   it('corrects for a TV clock that is a few minutes out', async () => {
@@ -206,6 +278,8 @@ describe('screen share', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('8 letters and numbers');
     fireEvent.change(input, { target: { value: 'zzzz-2345' } });
     fireEvent.click(screen.getByRole('button', { name: 'Show clock' }));
-    expect(await screen.findByText(/Connecting to the clock|This screen link has ended/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Connecting to the clock|This screen link has ended/),
+    ).toBeInTheDocument();
   });
 });

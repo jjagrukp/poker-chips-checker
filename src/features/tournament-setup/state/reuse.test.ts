@@ -10,6 +10,7 @@ import {
   newWizard,
   setCustom,
   setEditedSchedule,
+  setLevelEnd,
   setName,
   setPlayers,
   setStructure,
@@ -95,6 +96,17 @@ describe('duplicateOf', () => {
     const original = new Set([src.draft.schedule?.id, ...(src.draft.schedule?.segments.map((s) => s.id) ?? [])]);
     expect([copied?.id, ...(copied?.segments.map((s) => s.id) ?? [])].some((id) => original.has(id))).toBe(false);
     expect(copy.tournament.name).toBeUndefined();
+  });
+
+  it('keeps the draft level-end choice for presets and tournaments saved before spec 11', () => {
+    const draft = setLevelEnd(fresh(), 'auto');
+    const oldConfig = { ...source().config, levelEndBehaviour: undefined };
+    expect(applyPreset(draft, oldConfig as never).config.levelEndBehaviour).toBe('auto');
+    const oldTournament = { ...record(source()), config: oldConfig };
+    expect(duplicateOf(draft, oldTournament, undefined, context()).config.levelEndBehaviour).toBe('auto');
+    // A choice that was saved wins.
+    const saved = { ...record(setLevelEnd(source(), 'waitForHost')) };
+    expect(duplicateOf(draft, saved, undefined, context()).config.levelEndBehaviour).toBe('waitForHost');
   });
 
   it('falls back to the config without a setup draft, and ignores other games', () => {

@@ -22,7 +22,7 @@ import {
   InvalidTransition,
   transition,
 } from '@/core/tournaments/lifecycle';
-import type { Tournament } from '@/core/tournaments/tournament';
+import { deriveOptions, type Tournament } from '@/core/tournaments/tournament';
 import type { Inventory } from '@/features/chip-inventory/domain/inventory';
 import type { AlertAudio } from '@/infrastructure/audio/alert-audio';
 import type { AlertNotifier } from '@/infrastructure/notifications/notifier';
@@ -192,7 +192,7 @@ export function createClockStore({
       t.clock && {
         schedule,
         anchor: t.clock,
-        options: { breakEndBehaviour: t.settings.breakEndBehaviour },
+        options: deriveOptions(t),
       };
 
     return {

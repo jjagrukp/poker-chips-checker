@@ -11,7 +11,7 @@ import {
 } from '@/core/timer/commands';
 import { emptyReport, isValid, type ValidationReport } from '@/core/validation/report';
 import type { LifecycleAction, TournamentStatus } from './status';
-import type { Tournament } from './tournament';
+import { deriveOptions, type Tournament } from './tournament';
 
 // The single lifecycle service (spec 02 §5). Pure: callers persist the result.
 
@@ -93,9 +93,7 @@ export function transition(t: Tournament, input: TransitionInput, now: EpochMs):
         if (input.schedule.id !== t.scheduleId) {
           throw new InvalidTransition(t.status, action, 'schedule does not belong to tournament');
         }
-        const n = normalise(input.schedule, t.clock, now, {
-          breakEndBehaviour: t.settings.breakEndBehaviour,
-        });
+        const n = normalise(input.schedule, t.clock, now, deriveOptions(t));
         const clock = { ...freeze(n.anchor, now), revision: t.clock.revision + 1, updatedAt: now };
         next = { ...next, clock };
         events.push(
@@ -154,6 +152,6 @@ function clockState(t: Tournament, schedule: Schedule): ClockState {
   return {
     schedule,
     anchor: t.clock,
-    options: { breakEndBehaviour: t.settings.breakEndBehaviour },
+    options: deriveOptions(t),
   };
 }

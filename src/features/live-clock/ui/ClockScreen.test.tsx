@@ -173,6 +173,28 @@ describe('live clock screen', () => {
     expect(await screen.findByRole('heading', { name: "That's a wrap." })).toBeInTheDocument();
   });
 
+  it('waits at 0:00 when a level runs out until the host starts the next one (spec 11)', async () => {
+    const t = activeFrom();
+    const { clock } = await open({ ...t, settings: { ...t.settings, levelEndBehaviour: 'waitForHost' } });
+    await screen.findByRole('timer');
+    clock.advance(10 * MINUTE + 45 * SECOND);
+    expect(await screen.findByText("Time's up — finish this hand")).toBeInTheDocument();
+    expect(title()).toHaveTextContent('Level 2');
+    expect(timer()).toHaveTextContent('10:00');
+    expect(screen.getByText('Waiting for host')).toBeInTheDocument();
+
+    // Another minute of play: level 2 hasn't started, so its time is untouched.
+    clock.advance(MINUTE);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(timer()).toHaveTextContent('10:00');
+
+    fireEvent.click(button('Start Level 2'));
+    await screen.findByText('Running');
+    expect(screen.queryByText("Time's up — finish this hand")).not.toBeInTheDocument();
+    clock.advance(30 * SECOND);
+    await waitFor(() => expect(timer()).toHaveTextContent('09:30'));
+  });
+
   it('toggles the hand rankings and says where they appear (spec 10)', async () => {
     const { repos } = await open(activeFrom());
     await screen.findByRole('timer');

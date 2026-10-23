@@ -55,7 +55,7 @@ export function useAlerts(o: AlertsOptions): PlannedAlert | undefined {
   const scheduled = useRef(new Set<string>());
 
   const soundOn = o.sound && !o.muted && o.audioState === 'ready';
-  const timeline = `${o.schedule.id}|${o.anchor.revision}|${o.options.breakEndBehaviour}|${soundOn}|${JSON.stringify(o.prefs.enabled ?? {})}`;
+  const timeline = `${o.schedule.id}|${o.anchor.revision}|${o.options.breakEndBehaviour}|${o.options.levelEndBehaviour ?? 'auto'}|${soundOn}|${JSON.stringify(o.prefs.enabled ?? {})}`;
 
   useEffect(() => {
     o.audio.setVolume(alertVolume(o.prefs));

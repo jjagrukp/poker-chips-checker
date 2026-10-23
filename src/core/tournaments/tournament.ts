@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ClockAnchorSchema } from '@/core/timer/anchor';
+import { ClockAnchorSchema, type DeriveOptions } from '@/core/timer/anchor';
 import { TournamentStatusSchema } from './status';
 
 export const TOURNAMENT_SCHEMA_VERSION = 1;
@@ -9,6 +9,8 @@ const count = z.number().int().nonnegative();
 
 export const TournamentSettingsSchema = z.object({
   breakEndBehaviour: z.enum(['auto', 'waitForHost']),
+  /** Absent (tournaments made before D45) means auto; setup writes it for new ones. */
+  levelEndBehaviour: z.enum(['auto', 'waitForHost']).optional(),
   /** Show the module's reference panel (Hold'em: hand rankings) beside a big-screen clock (D44). */
   showReference: z.boolean().optional(),
 });
@@ -54,3 +56,11 @@ export const TournamentSchema = z.object({
   endedAt: epoch.optional(),
 });
 export type Tournament = z.infer<typeof TournamentSchema>;
+
+/** The clock options a tournament runs with; every caller derives through this (D45). */
+export function deriveOptions(tournament: Pick<Tournament, 'settings'>): DeriveOptions {
+  return {
+    breakEndBehaviour: tournament.settings.breakEndBehaviour,
+    levelEndBehaviour: tournament.settings.levelEndBehaviour ?? 'auto',
+  };
+}

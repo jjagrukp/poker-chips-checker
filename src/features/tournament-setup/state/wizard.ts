@@ -77,7 +77,10 @@ export function newWizard(ids: { tournamentId: string; inventoryId: string }, no
       config,
       allocation: undefined,
       participants: { count: config.players, remaining: config.players },
-      settings: { breakEndBehaviour: config.breakEndBehaviour },
+      settings: {
+        breakEndBehaviour: config.breakEndBehaviour,
+        levelEndBehaviour: config.levelEndBehaviour ?? 'waitForHost',
+      },
       createdAt: now,
       updatedAt: now,
     },
@@ -119,7 +122,11 @@ export function toTournament(state: WizardState, now: EpochMs): Tournament {
     config,
     setupDraft: draft,
     participants: { count: config.players, remaining: config.players },
-    settings: { ...tournament.settings, breakEndBehaviour: config.breakEndBehaviour },
+    settings: {
+      ...tournament.settings,
+      breakEndBehaviour: config.breakEndBehaviour,
+      levelEndBehaviour: config.levelEndBehaviour ?? 'waitForHost',
+    },
     updatedAt: now,
   };
 }
@@ -268,6 +275,14 @@ export function setBreakEnd(
   behaviour: HoldemConfig['breakEndBehaviour'],
 ): WizardState {
   return { ...state, config: { ...state.config, breakEndBehaviour: behaviour } };
+}
+
+/** Like the break setting: no schedule change, so level edits survive (spec 11). */
+export function setLevelEnd(
+  state: WizardState,
+  behaviour: NonNullable<HoldemConfig['levelEndBehaviour']>,
+): WizardState {
+  return { ...state, config: { ...state.config, levelEndBehaviour: behaviour } };
 }
 
 export function setEditedSchedule(state: WizardState, schedule: Schedule): WizardState {

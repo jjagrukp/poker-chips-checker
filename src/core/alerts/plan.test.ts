@@ -18,7 +18,9 @@ const running = (overrides: Partial<ClockAnchor> = {}): ClockAnchor => ({
 });
 
 const summary = (from: number, to: number, anchor = running(), opts: DeriveOptions = auto) =>
-  planAlerts(basic, anchor, from, to, opts).map((a) => `${a.key.split(':').slice(0, 2).join(':')}@${(a.at - T0) / SECOND}`);
+  planAlerts(basic, anchor, from, to, opts).map(
+    (a) => `${a.key.split(':').slice(0, 2).join(':')}@${(a.at - T0) / SECOND}`,
+  );
 
 describe('planAlerts', () => {
   it('plans level warnings, the countdown and the next level chime', () => {
@@ -70,6 +72,13 @@ describe('planAlerts', () => {
     expect(plan.some((p) => p.startsWith('l3'))).toBe(false);
   });
 
+  it('sounds at a level end but plans nothing past it when levels wait (spec 11)', () => {
+    const levelWait = { breakEndBehaviour: 'auto', levelEndBehaviour: 'waitForHost' } as const;
+    const plan = summary(T0 + 9 * MINUTE, T0 + 30 * MINUTE, running(), levelWait);
+    expect(plan.at(-1)).toBe('l2:levelStart@600');
+    expect(plan.some((p) => p.startsWith('l2:') && !p.startsWith('l2:levelStart'))).toBe(false);
+  });
+
   it('plans nothing at the end of the schedule (overtime)', () => {
     const last = running({ segmentIndex: 3, deadline: T0 + 10 * MINUTE });
     const plan = summary(T0 + 9 * MINUTE, T0 + 20 * MINUTE, last);
@@ -108,7 +117,13 @@ describe('planAlerts', () => {
   });
 
   it('plans nothing for a paused clock or one held for the host', () => {
-    const paused: ClockAnchor = { status: 'paused', segmentIndex: 0, remainingMs: MINUTE, revision: 1, updatedAt: T0 };
+    const paused: ClockAnchor = {
+      status: 'paused',
+      segmentIndex: 0,
+      remainingMs: MINUTE,
+      revision: 1,
+      updatedAt: T0,
+    };
     expect(planAlerts(basic, paused, T0, T0 + 10 * MINUTE, auto)).toEqual([]);
     const breakOver = running({ segmentIndex: 2, deadline: T0 });
     expect(planAlerts(basic, breakOver, T0 + SECOND, T0 + 10 * MINUTE, wait)).toEqual([]);

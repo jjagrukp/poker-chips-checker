@@ -21,7 +21,7 @@ import { deriveClock } from './derive-clock';
 
 const auto: DeriveOptions = { breakEndBehaviour: 'auto' };
 const wait: DeriveOptions = { breakEndBehaviour: 'waitForHost' };
-const state = (anchor: ClockAnchor, options = auto, sched = basic): ClockState => ({
+const state = (anchor: ClockAnchor, options: DeriveOptions = auto, sched = basic): ClockState => ({
   schedule: sched,
   anchor,
   options,
@@ -115,6 +115,28 @@ describe('start / pause / resume', () => {
       deadline: T0 + 19 * MINUTE,
       revision: 5,
       updatedAt: T0 + 9 * MINUTE,
+    });
+    expect(types(r.events)).toEqual(['segment_started', 'clock_command']);
+  });
+
+  it('resume starts the next level only when the host says so (spec 11)', () => {
+    const level1: ClockAnchor = {
+      status: 'running',
+      segmentIndex: 0,
+      deadline: T0 + 10 * MINUTE,
+      revision: 2,
+      updatedAt: T0,
+    };
+    const s = state(level1, { breakEndBehaviour: 'auto', levelEndBehaviour: 'waitForHost' });
+    // The hand ran four minutes over: level 2 still has its full ten minutes.
+    expect(view(s, T0 + 14 * MINUTE)).toMatchObject({ status: 'awaitingHost', segmentIndex: 1 });
+    const r = resume(s, T0 + 14 * MINUTE);
+    expect(r.anchor).toEqual({
+      status: 'running',
+      segmentIndex: 1,
+      deadline: T0 + 24 * MINUTE,
+      revision: 3,
+      updatedAt: T0 + 14 * MINUTE,
     });
     expect(types(r.events)).toEqual(['segment_started', 'clock_command']);
   });

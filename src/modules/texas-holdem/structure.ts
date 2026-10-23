@@ -59,6 +59,7 @@ export function defaultConfig(
       ante: { mode: 'none', startLevel: 1 },
       breaks: null,
       breakEndBehaviour: 'waitForHost',
+      levelEndBehaviour: 'waitForHost',
       smallestDenomination: DEFAULT_DENOMINATIONS[0],
       denominations: [...DEFAULT_DENOMINATIONS],
       presetVersion: PRESET_VERSION,

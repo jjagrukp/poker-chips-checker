@@ -241,6 +241,15 @@ game-agnostic). Per tournament rather than per device so the phone's toggle reac
 the shared TV through the normal commit → onSaved → snapshot path, with no extra sync channel. The
 Hold'em panel content is module data; the panel component lives with the live clock.
 
+D45 — Levels wait for the host by default (spec 11)
+A level ending mid-hand shouldn't start the next level's time. Reuses the break hold
+(`holdAtIndex` + `awaitingHost`), so no anchor schema change: `DeriveOptions.levelEndBehaviour`
+(optional; absent = auto) reaches every caller through `deriveOptions(tournament)`. Tournaments made
+before D45 keep running as they did (absent = auto); setup writes the choice for new ones, defaulting
+to wait (Hold'em config `levelEndBehaviour`, app default `Settings.levelEndDefault`). A shared TV
+on a cached pre-M15 build drops the unknown field and runs levels automatically; it must reload
+(the PWA prompts for updates).
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

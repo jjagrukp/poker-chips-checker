@@ -42,7 +42,7 @@ const BREAK_ENDS: BreakEndBehaviour[] = ['waitForHost', 'auto'];
 export function SettingsScreen(props: Props) {
   const { repos, data, clock, audio, notifier, appName, onToneChange, onDeleted } = props;
   const t = useT();
-  const ids = { tone: useId(), breakEnd: useId(), data: useId(), about: useId() };
+  const ids = { tone: useId(), breakEnd: useId(), levelEnd: useId(), data: useId(), about: useId() };
   const [settings, setSettings] = useState<Settings>();
   // `status` is announced politely; `problem` is an alert.
   const [status, setStatus] = useState<MessageKey>();
@@ -137,6 +137,7 @@ export function SettingsScreen(props: Props) {
 
   const tone = settings.tone ?? 'playful';
   const breakEnd = settings.breakEndDefault ?? 'waitForHost';
+  const levelEnd = settings.levelEndDefault ?? 'waitForHost';
 
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6">
@@ -189,6 +190,21 @@ export function SettingsScreen(props: Props) {
       />
 
       <Section id={ids.breakEnd} title={t('settings.defaults.heading')}>
+        <fieldset className="flex flex-col gap-1">
+          <legend className={label}>{t('setup.structure.levelEnd')}</legend>
+          {BREAK_ENDS.map((value) => (
+            <label key={value} className={row}>
+              <input
+                type="radio"
+                className={radio}
+                name={ids.levelEnd}
+                checked={levelEnd === value}
+                onChange={() => void update({ levelEndDefault: value })}
+              />
+              {t(`setup.structure.levelEnd.${value}`)}
+            </label>
+          ))}
+        </fieldset>
         <fieldset className="flex flex-col gap-1">
           <legend className={label}>{t('setup.structure.breakEnd')}</legend>
           {BREAK_ENDS.map((value) => (

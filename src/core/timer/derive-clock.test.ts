@@ -100,6 +100,57 @@ describe('deriveClock', () => {
     });
   });
 
+  describe('levels waiting for the host (spec 11)', () => {
+    const levelWait = { breakEndBehaviour: 'auto', levelEndBehaviour: 'waitForHost' } as const;
+
+    it('holds at the next level, full length, when a level runs out', () => {
+      const n = normalise(
+        basic,
+        running(0, T0 + 10 * MINUTE),
+        T0 + 10 * MINUTE + 30 * SECOND,
+        levelWait,
+      );
+      expect(n.view).toMatchObject({
+        status: 'awaitingHost',
+        segmentIndex: 1,
+        remainingMs: 10 * MINUTE,
+      });
+      expect(n.view.passedSegmentIds).toEqual(['l1']);
+      expect(n.anchor).toMatchObject({ status: 'paused', segmentIndex: 1, holdAtIndex: 1 });
+      expect(n.started).toEqual([]);
+    });
+
+    it('holds before a scheduled break too, and never skips ahead during catch-up', () => {
+      const n = normalise(basic, running(1, T0 + 20 * MINUTE), T0 + 90 * MINUTE, levelWait);
+      expect(n.view).toMatchObject({
+        status: 'awaitingHost',
+        segmentIndex: 2,
+        remainingMs: 5 * MINUTE,
+      });
+      expect(n.view.passedSegmentIds).toEqual(['l2']);
+    });
+
+    it('still runs a break into the next level when breaks are automatic', () => {
+      const n = normalise(basic, running(2, T0 + 25 * MINUTE), T0 + 26 * MINUTE, levelWait);
+      expect(n.view).toMatchObject({ status: 'running', segmentIndex: 3, remainingMs: 9 * MINUTE });
+    });
+
+    it('counts down normally before the level runs out, and auto keeps advancing', () => {
+      expect(
+        deriveClock(basic, running(0, T0 + 10 * MINUTE), T0 + 9 * MINUTE, levelWait),
+      ).toMatchObject({
+        status: 'running',
+        segmentIndex: 0,
+      });
+      expect(
+        deriveClock(basic, running(0, T0 + 10 * MINUTE), T0 + 11 * MINUTE, auto),
+      ).toMatchObject({
+        status: 'running',
+        segmentIndex: 1,
+      });
+    });
+  });
+
   it('runs into overtime on the last segment without inventing levels', () => {
     const n = normalise(basic, running(3, T0 + 10 * MINUTE), T0 + 12 * MINUTE, auto);
     expect(n.view).toMatchObject({

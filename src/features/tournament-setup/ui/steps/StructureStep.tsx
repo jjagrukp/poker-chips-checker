@@ -14,6 +14,7 @@ import {
   setBreakEnd,
   setCustom,
   setEditedSchedule,
+  setLevelEnd,
   setStructure,
 } from '../../state/wizard';
 import { useUpdate, useWizard, useWizardEnv } from '../context';
@@ -44,7 +45,7 @@ export function StructureStep() {
   const state = useWizard((s) => s);
   const { config, draft } = state;
   const r = review(state, ctx);
-  const ids = { ante: useId(), breakEnd: useId(), structure: useId() };
+  const ids = { ante: useId(), breakEnd: useId(), levelEnd: useId(), structure: useId() };
   const levels = draft.schedule?.segments.filter((s) => s.kind === 'level') ?? [];
   const minutes = (n: number) => formatDurationMin(n);
 
@@ -171,6 +172,20 @@ export function StructureStep() {
               )}
             </>
           )}
+          <fieldset className="flex flex-col gap-1 sm:col-span-2">
+            <legend className={label}>{t('setup.structure.levelEnd')}</legend>
+            {(['waitForHost', 'auto'] as const).map((b) => (
+              <label key={b} className="flex min-h-11 items-center gap-2">
+                <input
+                  type="radio"
+                  name={ids.levelEnd}
+                  checked={(config.levelEndBehaviour ?? 'waitForHost') === b}
+                  onChange={() => update((s) => setLevelEnd(s, b))}
+                />
+                {t(b === 'auto' ? 'setup.structure.levelEnd.auto' : 'setup.structure.levelEnd.waitForHost')}
+              </label>
+            ))}
+          </fieldset>
           <fieldset className="flex flex-col gap-1 sm:col-span-2">
             <legend className={label}>{t('setup.structure.breakEnd')}</legend>
             {(['waitForHost', 'auto'] as const).map((b) => (

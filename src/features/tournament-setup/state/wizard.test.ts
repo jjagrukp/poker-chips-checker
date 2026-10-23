@@ -13,6 +13,7 @@ import {
   markReady,
   newWizard,
   setBreakEnd,
+  setLevelEnd,
   setCustom,
   setEditedSchedule,
   setName,
@@ -64,6 +65,17 @@ function withStack(state: WizardState): WizardState {
 
 describe('wizard state', () => {
   const fresh = () => newWizard({ tournamentId: 't-1', inventoryId: 'inv-1' }, T0);
+
+  it('levels wait for the host by default, and the choice reaches the tournament (spec 11)', () => {
+    const state = fresh();
+    expect(state.config.levelEndBehaviour).toBe('waitForHost');
+    expect(toTournament(state, T0).settings.levelEndBehaviour).toBe('waitForHost');
+    const auto = setLevelEnd(state, 'auto');
+    expect(toTournament(auto, T0).settings.levelEndBehaviour).toBe('auto');
+    // A config saved before spec 11 has no choice: the tournament waits.
+    const old = { ...state, config: { ...state.config, levelEndBehaviour: undefined } };
+    expect(toTournament(old as WizardState, T0).settings.levelEndBehaviour).toBe('waitForHost');
+  });
 
   it('round-trips through the tournament record and its schema', () => {
     const ctx = context();

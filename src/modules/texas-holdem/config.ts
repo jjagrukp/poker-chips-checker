@@ -21,6 +21,8 @@ export const HoldemConfigSchema = z
     }),
     breaks: z.object({ everyMin: positiveInt, durationMin: positiveInt }).nullable(),
     breakEndBehaviour: z.enum(['auto', 'waitForHost']),
+    /** When a level's time runs out (spec 11); absent on older configs, which ran automatically. */
+    levelEndBehaviour: z.enum(['auto', 'waitForHost']).optional(),
     smallestDenomination: positiveInt,
     denominations: z.array(positiveInt).min(1),
     presetVersion: z.string().min(1),

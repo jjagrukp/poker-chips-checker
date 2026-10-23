@@ -414,6 +414,9 @@ export const messages = {
   'setup.structure.breaksOn': 'Include breaks',
   'setup.structure.breakEvery': 'Break after about this many minutes of play',
   'setup.structure.breakLength': 'Break length (minutes)',
+  'setup.structure.levelEnd': 'When a level ends',
+  'setup.structure.levelEnd.waitForHost': 'Wait for the host to start the next level',
+  'setup.structure.levelEnd.auto': 'Move on straight away, even mid-hand',
   'setup.structure.breakEnd': 'When a break ends',
   'setup.structure.breakEnd.waitForHost': 'Wait for the host to resume',
   'setup.structure.breakEnd.auto': 'Start the next level automatically',
@@ -466,6 +469,11 @@ export const messages = {
   'clock.adhocBreak': 'Break',
   'clock.timeLeft': 'Time left',
   'clock.control.reference': 'Hand rankings',
+  'clock.timeUp': "Time's up — finish this hand",
+  'clock.breakDone': "Break's over",
+  'clock.upNext': 'Up next',
+  'clock.control.startLevel': 'Start {label}',
+  'clock.control.startBreak': 'Start the break',
   'clock.reference.hint':
     'Hand rankings show beside the clock on the TV, and in fullscreen on a laptop or bigger screen.',
   'holdem.hands.title': 'Hand rankings',
@@ -633,6 +641,10 @@ export const messages = {
   'transition.levelUp': {
     playful: "The blinds are going up. Your excuses aren't helping.",
     neutral: 'The blinds are going up.',
+  },
+  'transition.timeUp': {
+    playful: "Time's up! Play out this hand, then we move on.",
+    neutral: "Time's up. Finish this hand.",
   },
   'transition.breakOver': {
     playful: 'Bathroom break over. Financial decisions resume.',

@@ -16,7 +16,8 @@ export type Interlude = z.infer<typeof InterludeSchema>;
  * running → `deadline` is set; paused/idle → `remainingMs` is set. When an interlude is
  * present those fields describe the interlude instead and the level waits at
  * `interlude.resumeLevelRemainingMs`. `holdAtIndex === segmentIndex` on a paused anchor
- * means the host must press Resume after a break (`awaitingHost`).
+ * means the host must press Resume before that segment starts (`awaitingHost`): after a break,
+ * or after a level when levels wait for the host (spec 11).
  */
 export const ClockAnchorSchema = z
   .object({
@@ -33,9 +34,13 @@ export const ClockAnchorSchema = z
 export type ClockAnchor = z.infer<typeof ClockAnchorSchema>;
 
 export type BreakEndBehaviour = 'auto' | 'waitForHost';
+/** What happens when a level's time runs out (spec 11). */
+export type LevelEndBehaviour = 'auto' | 'waitForHost';
 
 export interface DeriveOptions {
   breakEndBehaviour: BreakEndBehaviour;
+  /** Absent means auto; the app always passes the tournament's choice (D45). */
+  levelEndBehaviour?: LevelEndBehaviour;
 }
 
 export const CLOCK_COMMANDS = [

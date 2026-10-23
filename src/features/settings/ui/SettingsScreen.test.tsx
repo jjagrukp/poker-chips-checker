@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderApp } from '@/app/testing/render-app';
 import { createDraft } from '@/features/tournament-setup/state/create';
 import { fakePlatform } from '@/features/live-clock/testing/fixtures';
@@ -36,6 +36,16 @@ describe('SettingsScreen', () => {
       expect(s.alerts?.flash).toBe(true);
     });
     expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+  });
+
+  it('seeds new tournaments with the level-end default (spec 11)', async () => {
+    const { repos, ctx } = await openSettings();
+    const group = screen.getByRole('group', { name: 'When a level ends' });
+    expect(within(group).getByRole('radio', { name: 'Wait for the host to start the next level' })).toBeChecked();
+    fireEvent.click(within(group).getByRole('radio', { name: 'Move on straight away, even mid-hand' }));
+    await waitFor(async () => expect((await repos.settings.get()).levelEndDefault).toBe('auto'));
+    const id = await createDraft(repos, ctx);
+    expect((await repos.tournaments.get(id))?.settings.levelEndBehaviour).toBe('auto');
   });
 
   it('seeds new tournaments with the break-end default', async () => {

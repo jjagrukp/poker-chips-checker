@@ -65,6 +65,7 @@ export function planAlerts(
 
   const { segments } = schedule;
   const waitForHost = opts.breakEndBehaviour === 'waitForHost';
+  const waitAfterLevel = opts.levelEndBehaviour === 'waitForHost';
   let index = a.segmentIndex;
   let startedAt = -Infinity;
   let deadline: EpochMs;
@@ -89,7 +90,10 @@ export function planAlerts(
     if (segment.kind === 'break') add('breakEnd', segment.id, deadline);
     else add(next.kind === 'break' ? 'breakStart' : 'levelStart', next.id, deadline);
     // Later segments' alerts all fall after this deadline.
-    if (deadline >= to || (waitForHost && segment.kind === 'break')) break;
+    // A held next segment has no start time yet, so nothing after it can be planned.
+    const held =
+      (waitForHost && segment.kind === 'break') || (waitAfterLevel && segment.kind === 'level');
+    if (deadline >= to || held) break;
     index += 1;
     startedAt = deadline;
     deadline += next.durationMs;

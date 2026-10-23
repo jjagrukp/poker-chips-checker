@@ -51,8 +51,15 @@ export async function addStandardChips(page: Page) {
   await expect(page.getByText('Inventory confirmed and saved.')).toBeVisible();
 }
 
-/** Home → wizard with defaults and four chip types → `ready`. */
-export async function setUpReadyTournament(page: Page, name?: string) {
+/**
+ * Home → wizard with defaults and four chip types → `ready`. Levels roll over on their own unless
+ * `levelEnd: 'waitForHost'` (the app's default, spec 11); clock specs fast-forward across levels.
+ */
+export async function setUpReadyTournament(
+  page: Page,
+  name?: string,
+  { levelEnd = 'auto' }: { levelEnd?: 'auto' | 'waitForHost' } = {},
+) {
   await page.goto('/');
   await page.getByRole('button', { name: 'New tournament' }).click();
   if (name) await page.getByLabel('Tournament name (optional)').fill(name);
@@ -62,6 +69,13 @@ export async function setUpReadyTournament(page: Page, name?: string) {
   await next(page);
   await expect(page.getByText(/^Starting stack: /)).toBeVisible();
   await next(page);
+  if (levelEnd === 'auto') {
+    await page.getByText('Advanced').click();
+    await page
+      .getByRole('group', { name: 'When a level ends' })
+      .getByLabel('Move on straight away, even mid-hand')
+      .check();
+  }
   await next(page);
   await page.getByRole('button', { name: 'Start' }).click();
   await expect(heading(page, 'Ready to play')).toBeVisible();
