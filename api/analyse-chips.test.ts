@@ -277,7 +277,10 @@ describe('handleAnalyseChips with Gemini (AI_PROVIDER=gemini)', () => {
     expect(new Headers(init?.headers).get('x-goog-api-key')).toBe('gemini-key');
     const sent = JSON.parse(String(init?.body));
     expect(sent.contents[0].parts[0].inlineData).toMatchObject({ mimeType: 'image/jpeg' });
-    expect(sent.generationConfig).toMatchObject({ responseMimeType: 'application/json' });
+    expect(sent.generationConfig).toMatchObject({
+      responseMimeType: 'application/json',
+      thinkingConfig: { thinkingLevel: 'low' },
+    });
     expect(sent.generationConfig.responseJsonSchema.required).toContain('chipTypes');
   });
 

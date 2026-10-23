@@ -54,7 +54,7 @@ function boundary(layerDir, forbiddenAliasRegex, message, extraSyntax = []) {
 }
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results'] },
+  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', '.wrangler'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.strict, jsxA11y.flatConfigs.recommended],
     files: ['**/*.{ts,tsx,js}'],

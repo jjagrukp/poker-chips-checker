@@ -190,6 +190,11 @@ D35 — Cloudflare Pages host adapter (closes D30's M11 item)
 `RATE_LIMIT_DB` binding → AI reported off. `_middleware` adds nosniff/no-referrer/CSP/HSTS to `/api/*`; `_headers` adds
 HSTS (no includeSubDomains). Wrangler runs via `npx` (not a dependency). `postbuild` greps `dist` for keys.
 
+D36 — Gemini thinking level low (refines D34)
+Real photos hit the 25 s budget (504 timeout) with Gemini's default thinking. The request sets
+`generationConfig.thinkingConfig.thinkingLevel = "low"` (`minimal` isn't supported on every model). Chip
+identification needs little reasoning; the 25 s budget stays.
+
 ## Open questions (resolve when reached, record answer above)
 - Q1: resolved in D30.
 - Q2: Product name/logo (out of scope for engineering; brand config stays swappable).

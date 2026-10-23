@@ -6,7 +6,7 @@ compatibility_date = "2026-10-01"
 
 [vars]
 AI_PHOTO_ENABLED = "true"
-AI_PROVIDER = "anthropic"
+AI_PROVIDER = "gemini"
 RATE_LIMIT_PER_IP_PER_HOUR = "10"
 DAILY_REQUEST_CAP = "500"
 
@@ -14,5 +14,5 @@ DAILY_REQUEST_CAP = "500"
 binding = "RATE_LIMIT_DB"
 database_name = "tournament-rate-limits"
 # Replace with the id printed by `npx wrangler d1 create tournament-rate-limits`.
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "1835ffd5-3055-4124-a868-adcd6902824e"
 migrations_dir = "migrations"

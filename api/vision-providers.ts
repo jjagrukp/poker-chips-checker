@@ -124,6 +124,8 @@ ${RULES}`,
         generationConfig: {
           responseMimeType: 'application/json',
           responseJsonSchema: REPORT_TOOL_INPUT_SCHEMA,
+          // Default thinking ran past the 25 s budget on real photos (D36).
+          thinkingConfig: { thinkingLevel: 'low' },
         },
       }),
     },
